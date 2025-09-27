@@ -1,3 +1,36 @@
 docs
 .windsurf
 .env
+
+# MinIO data directory
+infra/minio/data/
+infra/minio/config/
+
+# Backend cache and temporary files
+backend/__pycache__/
+backend/.pytest_cache/
+backend/app/data/temp/
+
+# Node modules and build artifacts
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+
+# Python virtual environment
+venv/
+env/
+.venv/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/

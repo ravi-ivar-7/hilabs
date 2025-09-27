@@ -15,3 +15,31 @@
 - **Node.js**: v20.16.0
 - **Python**: 3.12.3
 - **Docker**: 28.4.0
+
+
+## Quick Setup
+
+### Prerequisites
+- Docker and Docker Compose installed
+- Git (for cloning the repository)
+- 8GB+ RAM recommended
+
+### Installation Steps
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/ravi-ivar-7/hilabs.git
+   cd hilabs
+   ```
+
+2. **Run the automated setup:**
+   ```bash
+   chmod +x setup.sh
+   ./setup.sh
+   ```
+
+3. **Access the application:**
+   - **Frontend**: http://localhost:3000
+   - **MinIO Console**: http://localhost:9001 (hilabs / hilabsminio)
+   - **MinIO API**: http://localhost:9000
+
