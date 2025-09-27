@@ -19,21 +19,17 @@ fi
 
 # Create necessary directories
 echo "📁 Creating project directories..."
-mkdir -p infra/minio/data infra/minio/config
 mkdir -p backend/app/data backend/app/models
+mkdir -p upload/contracts-tn upload/contracts-wa
 echo "✅ Directories created"
 
 # Build and start services
 echo "🐳 Building and starting Docker services..."
 docker-compose up --build -d
 
-# Wait for MinIO to be ready
-echo "⏳ Waiting for MinIO to be ready..."
-sleep 15
-
-# Initialize MinIO buckets
-echo "🪣 Initializing MinIO buckets..."
-docker exec -it hilabs-minio /usr/local/bin/init-buckets.sh
+# Wait for services to be ready
+echo "⏳ Waiting for services to be ready..."
+sleep 10
 
 # Check service status
 echo "🔍 Checking service status..."
@@ -43,12 +39,10 @@ echo ""
 echo "✅ Setup Complete!"
 echo "==================="
 echo "🌐 Frontend: http://localhost:3000"
-echo "📦 MinIO API: http://localhost:9000"
-echo "🖥️  MinIO Console: http://localhost:9001"
-echo "🔐 MinIO Credentials: hilabs / hilabsminio"
+echo "🔧 Backend API: http://localhost:8000"
 echo ""
 echo "📚 Next steps:"
-echo "   - Access MinIO console to verify buckets"
 echo "   - Upload test contracts via frontend"
+echo "   - Files will be stored in ./upload/ directory"
 echo "   - Check logs: docker-compose logs -f"
 echo ""
