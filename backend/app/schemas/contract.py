@@ -1,0 +1,71 @@
+from pydantic import BaseModel, Field
+from typing import Optional, List
+from datetime import datetime
+import uuid
+
+
+class ContractUploadRequest(BaseModel):
+    state: str = Field(..., pattern="^(TN|WA)$")
+
+
+class ContractResponse(BaseModel):
+    id: str
+    filename: str
+    original_filename: str
+    file_size: int
+    state: str
+    status: str
+    created_at: datetime
+    processing_started_at: Optional[datetime] = None
+    processing_completed_at: Optional[datetime] = None
+    total_clauses: Optional[int] = None
+    standard_clauses: Optional[int] = None
+    non_standard_clauses: Optional[int] = None
+    error_message: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+class ContractStatusResponse(BaseModel):
+    id: str
+    status: str
+    progress: Optional[int] = None
+    message: Optional[str] = None
+    created_at: datetime
+    processing_started_at: Optional[datetime] = None
+    processing_completed_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class ClauseResponse(BaseModel):
+    id: str
+    clause_number: int
+    attribute_name: str
+    clause_text: str
+    classification: Optional[str] = None
+    confidence_score: Optional[int] = None
+    template_match_text: Optional[str] = None
+    similarity_score: Optional[int] = None
+    match_type: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+class ContractResultsResponse(BaseModel):
+    contract: ContractResponse
+    clauses: List[ClauseResponse]
+    summary: dict
+
+    class Config:
+        from_attributes = True
+
+
+class HealthResponse(BaseModel):
+    status: str
+    timestamp: datetime
+    version: str
+    services: dict

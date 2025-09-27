@@ -2,38 +2,88 @@ docs
 .windsurf
 .env
 
-# MinIO data directory
+# MinIO data and config directories
 infra/minio/data/
 infra/minio/config/
 
 # Redis data directory
 infra/redis/data/
 
-# Backend cache and temporary files
-backend/__pycache__/
-backend/.pytest_cache/
-backend/app/data/temp/
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
 
-# Node modules and build artifacts
-frontend/node_modules/
-frontend/.next/
-frontend/out/
-
-# Python virtual environment
+# Virtual environments
 venv/
-env/
+ENV/
 .venv/
 
-# IDE and editor files
+# Backend specific
+backend/venv/
+backend/*.db
+backend/contracts.db
+backend/alembic/versions/*.py
+!backend/alembic/versions/__init__.py
+backend/phases/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# IDE/Editor files
 .vscode/
 .idea/
 *.swp
 *.swo
+*~
 
 # OS generated files
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
 
 # Logs
 *.log
 logs/
+
+# Temporary files
+tmp/
+temp/
+.tmp/
+
+# Coverage reports
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+
+# pytest
+.pytest_cache/
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
