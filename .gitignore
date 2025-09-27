@@ -6,6 +6,9 @@ docs
 infra/minio/data/
 infra/minio/config/
 
+# Redis data directory
+infra/redis/data/
+
 # Backend cache and temporary files
 backend/__pycache__/
 backend/.pytest_cache/

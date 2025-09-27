@@ -1,6 +1,24 @@
 version: '3.8'
 
 services:
+  # Redis for Celery background tasks
+  redis:
+    build:
+      context: ./infra/redis
+      dockerfile: Dockerfile
+    container_name: hilabs-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    networks:
+      - hilabs-network
+
   # MinIO Object Storage
   minio:
     build:
@@ -11,18 +29,19 @@ services:
       - "9000:9000"  # API port
       - "9001:9001"  # Console port
     environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-hilabs}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-hilabsminio}
+      MINIO_ROOT_USER: hilabs
+      MINIO_ROOT_PASSWORD: hilabsminio
     volumes:
       - ./infra/minio/data:/data
       - ./infra/minio/config:/root/.minio
-    networks:
-      - hilabs-network
+    command: server /data --console-address ":9001"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
       interval: 30s
       timeout: 20s
       retries: 3
+    networks:
+      - hilabs-network
 
   frontend:
     build:
@@ -50,13 +69,18 @@ services:
       - MINIO_ENDPOINT=minio:9000
       - MINIO_ACCESS_KEY=${MINIO_ROOT_USER:-hilabs}
       - MINIO_SECRET_KEY=${MINIO_ROOT_PASSWORD:-hilabs123456}
+      - REDIS_URL=redis://redis:6379/0
     volumes:
       - ./backend/app/data:/app/data
       - ./backend/app/models:/app/models
     depends_on:
       - minio
+      - redis
     networks:
       - hilabs-network
+
+volumes:
+  redis_data:
 
 networks:
   hilabs-network:
