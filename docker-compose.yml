@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://backend:8000
+    depends_on:
+      - backend
+    networks:
+      - hilabs-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=production
+      - MAX_WORKERS=2
+    volumes:
+      - ./data:/app/data
+      - ./models:/app/models
+    networks:
+      - hilabs-network
+
+networks:
+  hilabs-network:
+    driver: bridge
+
+volumes:
+  data:
+  models:
