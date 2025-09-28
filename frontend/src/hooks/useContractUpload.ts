@@ -110,12 +110,17 @@ export function useContractUpload(): UseContractUploadReturn {
 
   const getContractStatus = useCallback(async (contractId: string) => {
     try {
-      const response = await apiClient.getContractStatus(contractId);
+      const response = await apiClient.refreshContractStatus(contractId);
       if (response.success && response.data) {
         setContracts(prev =>
           prev.map(contract =>
             contract.id === contractId
-              ? { ...contract, status: response.data.status }
+              ? { 
+                  ...contract, 
+                  status: response.data.status,
+                  processing_progress: response.data.processing_progress,
+                  processing_message: response.data.processing_message
+                }
               : contract
           )
         );

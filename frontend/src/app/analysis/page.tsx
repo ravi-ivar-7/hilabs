@@ -29,6 +29,13 @@ export default function AnalysisPage() {
             Completed
           </span>
         );
+      case 'preprocessed':
+        return (
+          <span className={`${baseClasses} bg-blue-100 text-blue-800`}>
+            <CheckCircle className="h-3 w-3 mr-1" />
+            Preprocessed
+          </span>
+        );
       case 'processing':
         return (
           <span className={`${baseClasses} bg-yellow-100 text-yellow-800`}>
@@ -36,6 +43,7 @@ export default function AnalysisPage() {
             Processing
           </span>
         );
+      case 'failed':
       case 'error':
         return (
           <span className={`${baseClasses} bg-red-100 text-red-800`}>
@@ -52,7 +60,7 @@ export default function AnalysisPage() {
         );
       case 'uploaded':
         return (
-          <span className={`${baseClasses} bg-blue-100 text-blue-800`}>
+          <span className={`${baseClasses} bg-gray-100 text-gray-800`}>
             <CheckCircle className="h-3 w-3 mr-1" />
             Uploaded
           </span>
@@ -86,6 +94,8 @@ export default function AnalysisPage() {
             file_size: contract.file_size,
             state: contract.state,
             status: contract.status,
+            processing_progress: contract.processing_progress,
+            processing_message: contract.processing_message,
             created_at: contract.created_at,
             name: contract.original_filename,
             size: contract.file_size,
@@ -117,6 +127,8 @@ export default function AnalysisPage() {
           file_size: updatedContract.file_size,
           state: updatedContract.state,
           status: updatedContract.status,
+          processing_progress: updatedContract.processing_progress,
+          processing_message: updatedContract.processing_message,
           created_at: updatedContract.created_at,
           name: updatedContract.original_filename,
           size: updatedContract.file_size,
@@ -151,6 +163,8 @@ export default function AnalysisPage() {
           file_size: contract.file_size,
           state: contract.state,
           status: contract.status,
+          processing_progress: contract.processing_progress,
+          processing_message: contract.processing_message,
           created_at: contract.created_at,
           name: contract.original_filename,
           size: contract.file_size,
@@ -188,8 +202,10 @@ export default function AnalysisPage() {
   };
 
   const completedContracts = contracts.filter(c => c.status === 'completed').length;
-  const processingContracts = contracts.filter(c => c.status === 'processing').length;
-  const errorContracts = contracts.filter(c => c.status === 'error').length;
+  const processingContracts = contracts.filter(c => 
+    c.status === 'processing' || c.status === 'uploaded' || c.status === 'queued' || c.status === 'preprocessed'
+  ).length;
+  const errorContracts = contracts.filter(c => c.status === 'error' || c.status === 'failed').length;
 
   if (selectedContract) {
     return (
@@ -233,9 +249,6 @@ export default function AnalysisPage() {
             {refreshingAll ? 'Refreshing...' : 'Refresh All'}
           </button>
         </div>
-        <p className="text-lg text-gray-600">
-          Monitor your contract analysis progress and view detailed results.
-        </p>
       </div>
 
       {/* Stats Cards */}
@@ -316,6 +329,30 @@ export default function AnalysisPage() {
                         {formatFileSize(contract.size)} • {contract.state} • 
                         {contract.uploadedAt.toLocaleDateString()}
                       </p>
+                      {((contract.status === 'processing' || contract.status === 'uploaded' || contract.status === 'queued' || contract.status === 'preprocessed') && (contract.processing_message || contract.processing_progress !== undefined)) && (
+                        <div className="mt-2">
+                          <div className="flex items-center space-x-2">
+                            {contract.processing_message && (
+                              <div className="text-xs text-blue-600 font-medium">
+                                {contract.processing_message}
+                              </div>
+                            )}
+                            {contract.processing_progress !== undefined && contract.processing_progress !== null && (
+                              <div className="text-xs text-gray-500">
+                                ({contract.processing_progress}%)
+                              </div>
+                            )}
+                          </div>
+                          {contract.processing_progress !== undefined && contract.processing_progress !== null && (
+                            <div className="mt-1 w-full bg-gray-200 rounded-full h-1.5">
+                              <div 
+                                className="bg-blue-600 h-1.5 rounded-full transition-all duration-300" 
+                                style={{ width: `${contract.processing_progress}%` }}
+                              ></div>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center space-x-3">

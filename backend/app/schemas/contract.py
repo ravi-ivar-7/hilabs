@@ -28,6 +28,8 @@ class ContractResponse(BaseModel):
     file_size: int
     state: str
     status: str
+    processing_progress: Optional[int] = None
+    processing_message: Optional[str] = None
     created_at: datetime
     processing_started_at: Optional[datetime] = None
     processing_completed_at: Optional[datetime] = None
@@ -43,8 +45,8 @@ class ContractResponse(BaseModel):
 class ContractStatusResponse(BaseModel):
     id: str
     status: str
-    progress: Optional[int] = None
-    message: Optional[str] = None
+    processing_progress: Optional[int] = None
+    processing_message: Optional[str] = None
     created_at: datetime
     processing_started_at: Optional[datetime] = None
     processing_completed_at: Optional[datetime] = None

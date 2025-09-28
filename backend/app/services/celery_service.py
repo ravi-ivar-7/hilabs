@@ -13,11 +13,11 @@ class CeleryService:
         )
         self.redis_client = redis.from_url(settings.redis_url)
     
-    def queue_processing_task(self, contract_id: str) -> str:
+    def queue_preprocessing_task(self, contract_id: str) -> str:
         task = self.celery_app.send_task(
-            'tasks.contract_processing.process_contract',
+            'tasks.contract_preprocessing.extract_contract_text',
             args=[contract_id],
-            queue='contract_processing'
+            queue='contract_preprocessing'
         )
         return task.id
     
@@ -45,7 +45,7 @@ class CeleryService:
         except Exception:
             return False
     
-    def get_queue_length(self, queue_name: str = "contract_processing") -> int:
+    def get_queue_length(self, queue_name: str = "contract_preprocessing") -> int:
         try:
             return self.redis_client.llen(f"celery:{queue_name}")
         except Exception:

@@ -5,6 +5,8 @@ export interface ContractResponse {
   file_size: number;
   state: string;
   status: string;
+  processing_progress?: number;
+  processing_message?: string;
   created_at: string;
   processing_started_at?: string;
   processing_completed_at?: string;
@@ -17,8 +19,8 @@ export interface ContractResponse {
 export interface ContractStatusResponse {
   id: string;
   status: string;
-  progress?: number;
-  message?: string;
+  processing_progress?: number;
+  processing_message?: string;
   created_at: string;
   processing_started_at?: string;
   processing_completed_at?: string;
@@ -54,6 +56,8 @@ export interface ContractFile extends ContractResponse {
   size: number;
   type: string;
   uploadedAt: Date;
+  processing_progress?: number;
+  processing_message?: string;
 }
 
 export interface ContractUploadResponse {

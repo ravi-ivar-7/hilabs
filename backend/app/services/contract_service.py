@@ -186,7 +186,7 @@ class ContractService:
                     "task_id": None
                 }
             
-            task_id = self.celery_service.queue_processing_task(contract_id)
+            task_id = self.celery_service.queue_preprocessing_task(contract_id)
             
             contract.celery_task_id = task_id
             # Status will change to "queued" when worker picks it up
