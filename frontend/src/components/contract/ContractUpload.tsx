@@ -3,15 +3,16 @@
 import { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Upload, FileText, X, AlertCircle } from 'lucide-react';
-import { ContractFile } from '@/types/contract';
-import { validateFileType, validateFileSize, formatFileSize } from '@/lib/utils';
-import LoadingSpinner from '@/components/common/LoadingSpinner';
+import { ContractFile } from '../../types/contract';
+import { validateFileType, validateFileSize, formatFileSize } from '../../lib/utils';
+import LoadingSpinner from '../common/LoadingSpinner';
 
 interface ContractUploadProps {
   onUpload: (file: File, state: 'TN' | 'WA') => Promise<void>;
   contracts: ContractFile[];
   onRemove: (id: string) => void;
   isUploading: boolean;
+  uploadProgress: { [key: string]: number };
   error: string | null;
 }
 
@@ -20,6 +21,7 @@ export default function ContractUpload({
   contracts,
   onRemove,
   isUploading,
+  uploadProgress,
   error,
 }: ContractUploadProps) {
   const [selectedState, setSelectedState] = useState<'TN' | 'WA'>('TN');
@@ -134,7 +136,26 @@ export default function ContractUpload({
               </div>
               <div className="flex items-center space-x-2">
                 {contract.status === 'uploading' && (
-                  <LoadingSpinner size="sm" />
+                  <div className="flex items-center space-x-2">
+                    <LoadingSpinner size="sm" />
+                    {uploadProgress[contract.id] && (
+                      <span className="text-sm text-gray-500">
+                        {uploadProgress[contract.id]}%
+                      </span>
+                    )}
+                  </div>
+                )}
+                {contract.status === 'processing' && (
+                  <div className="flex items-center space-x-2">
+                    <LoadingSpinner size="sm" />
+                    <span className="text-sm text-blue-600">Processing...</span>
+                  </div>
+                )}
+                {contract.status === 'completed' && (
+                  <div className="flex items-center space-x-2">
+                    <div className="h-2 w-2 bg-green-500 rounded-full"></div>
+                    <span className="text-sm text-green-600">Complete</span>
+                  </div>
                 )}
                 {contract.status === 'error' && (
                   <AlertCircle className="h-5 w-5 text-red-500" />

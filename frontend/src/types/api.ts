@@ -3,6 +3,7 @@ export interface APIResponse<T = any> {
   data?: T;
   message: string;
   error?: string;
+  details?: string;
 }
 
 export interface UploadProgress {

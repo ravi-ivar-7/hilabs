@@ -41,7 +41,7 @@ class Contract(BaseModel):
 class FileRecord(BaseModel):
     __tablename__ = "file_records"
     
-    contract_id = Column(UUID(as_uuid=True), ForeignKey("contracts.id"), nullable=False)
+    contract_id = Column(String, ForeignKey("contracts.id"), nullable=False)
     
     # File information
     file_type = Column(String(20), nullable=False)  # original, extracted_text, processed
@@ -61,7 +61,7 @@ class FileRecord(BaseModel):
 class ContractClause(BaseModel):
     __tablename__ = "contract_clauses"
     
-    contract_id = Column(UUID(as_uuid=True), ForeignKey("contracts.id"), nullable=False)
+    contract_id = Column(String, ForeignKey("contracts.id"), nullable=False)
     
     clause_number = Column(Integer, nullable=False)
     attribute_name = Column(String(100), nullable=False)
@@ -83,7 +83,7 @@ class ContractClause(BaseModel):
 class ProcessingLog(BaseModel):
     __tablename__ = "processing_logs"
     
-    contract_id = Column(UUID(as_uuid=True), ForeignKey("contracts.id"), nullable=True)
+    contract_id = Column(String, ForeignKey("contracts.id"), nullable=True)
     
     # Log information
     level = Column(String(10), nullable=False)  # DEBUG, INFO, WARNING, ERROR

@@ -7,7 +7,7 @@ from ..models import Contract, FileRecord, ContractClause
 from ..schemas import ContractResponse, ContractStatusResponse
 from .filesystem_service import FileSystemService
 from .celery_service import CeleryService
-from .preprocessing import PDFExtractor, TextCleaner, MetadataExtractor
+import hashlib
 
 logger = logging.getLogger(__name__)
 
@@ -15,9 +15,6 @@ class ContractService:
     def __init__(self):
         self.filesystem_service = FileSystemService()
         self.celery_service = CeleryService()
-        self.pdf_extractor = PDFExtractor()
-        self.text_cleaner = TextCleaner()
-        self.metadata_extractor = MetadataExtractor()
     
     def create_contract(
         self, 
@@ -28,38 +25,30 @@ class ContractService:
         state: str
     ) -> Dict[str, Any]:
         try:
-            # Extract file metadata
-            file_metadata = self.metadata_extractor.extract_file_metadata(
-                file_bytes, filename, state
-            )
+            file_size = len(file_bytes)
+            file_hash = hashlib.sha256(file_bytes).hexdigest()
             
-            if not file_metadata["success"]:
-                return {
-                    "success": False,
-                    "error": f"Metadata extraction failed: {file_metadata['error']}",
-                    "contract": None
-                }
-            
-            # Create contract record first
             bucket_name = f"contracts-{state.lower()}"
             
             contract = Contract(
                 filename=filename,
                 original_filename=original_filename,
-                file_size=file_metadata["file_size"],
-                file_hash=file_metadata["file_hash"],
+                file_size=file_size,
+                file_hash=file_hash,
                 state=state,
                 status="uploaded",
                 storage_bucket=bucket_name,
-                storage_object_key=f"{filename}"
+                storage_object_key=""  # Will be set after getting contract ID
             )
             
             db.add(contract)
             db.commit()
             db.refresh(contract)
             
-            # Upload file to filesystem
-            object_name = f"{contract.id}.pdf"
+            object_name = f"{contract.id}_{filename}"
+            contract.storage_object_key = object_name
+            db.commit()  
+            
             upload_success = self.filesystem_service.upload_file(
                 bucket_name, object_name, file_bytes
             )
@@ -79,7 +68,7 @@ class ContractService:
                 contract_id=contract.id,
                 file_type="original",
                 filename=filename,
-                file_size=file_metadata["file_size"],
+                file_size=file_size,
                 mime_type="application/pdf",
                 storage_bucket=bucket_name,
                 storage_object_key=object_name
@@ -123,6 +112,36 @@ class ContractService:
         
         return query.offset(skip).limit(limit).all()
     
+    def delete_contract(self, db: Session, contract_id: str) -> Dict[str, Any]:
+        try:
+            contract = self.get_contract(db, contract_id)
+            if not contract:
+                return {
+                    "success": False,
+                    "error": "Contract not found"
+                }
+            
+            self.filesystem_service.delete_file(contract.storage_bucket, contract.storage_object_key)
+            
+            text_file_key = f"{contract.id}_extracted.txt"
+            self.filesystem_service.delete_file(contract.storage_bucket, text_file_key)
+            
+            db.delete(contract)
+            db.commit()
+            
+            return {
+                "success": True,
+                "error": None
+            }
+            
+        except Exception as e:
+            logger.error(f"Contract deletion failed: {str(e)}")
+            db.rollback()
+            return {
+                "success": False,
+                "error": str(e)
+            }
+
     def update_contract_status(
         self, 
         db: Session, 
@@ -165,7 +184,7 @@ class ContractService:
             task_id = self.celery_service.queue_processing_task(contract_id)
             
             contract.celery_task_id = task_id
-            contract.status = "queued"
+            # Status will change to "queued" when worker picks it up
             db.commit()
             
             return {
@@ -233,11 +252,23 @@ class ContractService:
                     "results": None
                 }
             
+            # Return results regardless of status, but with appropriate data
             if contract.status != "completed":
+                summary = {
+                    "total_clauses": 0,
+                    "standard_clauses": 0,
+                    "non_standard_clauses": 0,
+                    "processing_time": None
+                }
+                
                 return {
-                    "success": False,
-                    "error": "Contract processing not completed",
-                    "results": None
+                    "success": True,
+                    "error": None,
+                    "results": {
+                        "contract": contract,
+                        "clauses": [],
+                        "summary": summary
+                    }
                 }
             
             clauses = db.query(ContractClause).filter(
@@ -273,22 +304,3 @@ class ContractService:
                 "results": None
             }
     
-    def delete_contract(self, db: Session, contract_id: str) -> bool:
-        try:
-            contract = self.get_contract(db, contract_id)
-            if not contract:
-                return False
-            
-            self.filesystem_service.delete_file(
-                contract.storage_bucket, 
-                contract.storage_object_key
-            )
-            
-            db.delete(contract)
-            db.commit()
-            return True
-            
-        except Exception as e:
-            logger.error(f"Contract deletion failed: {str(e)}")
-            db.rollback()
-            return False

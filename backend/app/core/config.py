@@ -28,7 +28,6 @@ class Settings(BaseSettings):
         case_sensitive = False
 
 
-# Global settings instance
 settings = Settings()
 
 def get_settings() -> Settings:

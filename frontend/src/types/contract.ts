@@ -1,11 +1,59 @@
-export interface ContractFile {
+export interface ContractResponse {
   id: string;
+  filename: string;
+  original_filename: string;
+  file_size: number;
+  state: string;
+  status: string;
+  created_at: string;
+  processing_started_at?: string;
+  processing_completed_at?: string;
+  total_clauses?: number;
+  standard_clauses?: number;
+  non_standard_clauses?: number;
+  error_message?: string;
+}
+
+export interface ContractStatusResponse {
+  id: string;
+  status: string;
+  progress?: number;
+  message?: string;
+  created_at: string;
+  processing_started_at?: string;
+  processing_completed_at?: string;
+}
+
+export interface ClauseResponse {
+  id: string;
+  clause_number: number;
+  attribute_name: string;
+  clause_text: string;
+  classification?: string;
+  confidence_score?: number;
+  template_match_text?: string;
+  similarity_score?: number;
+  match_type?: string;
+}
+
+export interface ContractResultsResponse {
+  contract: ContractResponse;
+  clauses: ClauseResponse[];
+  summary: {
+    total_clauses: number;
+    standard_clauses: number;
+    non_standard_clauses: number;
+    processing_time?: number;
+    accuracy_score?: number;
+  };
+}
+
+// Legacy interfaces for backward compatibility
+export interface ContractFile extends ContractResponse {
   name: string;
   size: number;
   type: string;
-  state: 'TN' | 'WA';
   uploadedAt: Date;
-  status: 'uploading' | 'uploaded' | 'processing' | 'completed' | 'error';
 }
 
 export interface ContractUploadResponse {

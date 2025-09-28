@@ -15,7 +15,7 @@ class CeleryService:
     
     def queue_processing_task(self, contract_id: str) -> str:
         task = self.celery_app.send_task(
-            'worker.tasks.process_contract',
+            'tasks.contract_processing.process_contract',
             args=[contract_id],
             queue='contract_processing'
         )

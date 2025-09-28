@@ -8,6 +8,19 @@ class ContractUploadRequest(BaseModel):
     state: str = Field(..., pattern="^(TN|WA)$")
 
 
+class ContractUploadResponse(BaseModel):
+    id: str
+    filename: str
+    original_filename: str
+    file_size: int
+    state: str
+    status: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
 class ContractResponse(BaseModel):
     id: str
     filename: str

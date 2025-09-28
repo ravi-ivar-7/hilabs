@@ -30,11 +30,11 @@ export default function Header() {
               <span>Upload</span>
             </Link>
             <Link
-              href="/dashboard"
+              href="/analysis"
               className="text-gray-500 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium flex items-center space-x-1"
             >
               <BarChart3 className="h-4 w-4" />
-              <span>Dashboard</span>
+              <span>Analysis</span>
             </Link>
           </nav>
         </div>

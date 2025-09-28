@@ -8,11 +8,9 @@ from ..core.config import settings
 def validate_file(file: UploadFile) -> Tuple[bool, Optional[str]]:
     """Validate uploaded file"""
     
-    # Check file type
     if file.content_type not in settings.allowed_file_types:
         return False, f"Invalid file type. Allowed types: {', '.join(settings.allowed_file_types)}"
     
-    # Check file extension
     if not file.filename.lower().endswith('.pdf'):
         return False, "File must have .pdf extension"
     
@@ -43,10 +41,8 @@ def generate_file_hash(content: bytes) -> str:
 
 def sanitize_filename(filename: str) -> str:
     """Sanitize filename for safe storage"""
-    # Remove path components
     filename = os.path.basename(filename)
     
-    # Replace unsafe characters
     unsafe_chars = ['<', '>', ':', '"', '/', '\\', '|', '?', '*']
     for char in unsafe_chars:
         filename = filename.replace(char, '_')

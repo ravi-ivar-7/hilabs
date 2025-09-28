@@ -6,14 +6,9 @@ from datetime import datetime
 
 from ..core.database import get_db
 from ..models import Contract, ContractClause
-from ..schemas import (
-    ContractResponse, 
-    ContractStatusResponse, 
-    ContractResultsResponse,
-    ClauseResponse
-)
+from ..schemas.contract import ContractUploadResponse, ContractResponse, ContractStatusResponse, ContractResultsResponse, ClauseResponse
 from ..utils.response_utils import create_success_response, create_error_response
-from ..utils.file_utils import validate_file, sanitize_filename, generate_file_hash
+from ..utils.file_utils import validate_file, sanitize_filename, generate_file_hash, validate_state
 from ..services.contract_service import ContractService
 
 router = APIRouter()
@@ -25,10 +20,21 @@ async def upload_contract(
     db: Session = Depends(get_db)
 ):
     try:
-        if not validate_file(file, state):
+        # Validate file
+        file_valid, file_error = validate_file(file)
+        if not file_valid:
             return create_error_response(
-                message="Invalid file or state",
+                message=file_error,
                 error="FILE_VALIDATION_ERROR"
+            )
+        
+        # Validate state
+        from ..utils.file_utils import validate_state
+        state_valid, state_error = validate_state(state)
+        if not state_valid:
+            return create_error_response(
+                message=state_error,
+                error="STATE_VALIDATION_ERROR"
             )
         
         file_content = await file.read()
@@ -64,7 +70,7 @@ async def upload_contract(
             )
         
         return create_success_response(
-            data=ContractResponse.from_orm(contract).dict(),
+            data=ContractUploadResponse.from_orm(contract).dict(),
             message="Contract uploaded successfully"
         )
         
@@ -74,33 +80,34 @@ async def upload_contract(
             error=str(e)
         )
 
-@router.get("/{contract_id}/status", response_model=dict)
-async def get_contract_status(
+
+@router.delete("/{contract_id}", response_model=dict)
+async def delete_contract(
     contract_id: str,
     db: Session = Depends(get_db)
 ):
     try:
         contract_service = ContractService()
-        result = contract_service.get_processing_status(db, contract_id)
+        result = contract_service.delete_contract(db, contract_id)
         
         if not result["success"]:
             if "not found" in result["error"]:
                 raise HTTPException(status_code=404, detail="Contract not found")
             return create_error_response(
-                message="Failed to get status",
+                message="Failed to delete contract",
                 error=result["error"]
             )
         
         return create_success_response(
-            data=result["status"],
-            message="Status retrieved successfully"
+            data=None,
+            message="Contract deleted successfully"
         )
         
     except HTTPException:
         raise
     except Exception as e:
         return create_error_response(
-            message="Failed to get status",
+            message="Failed to delete contract",
             error=str(e)
         )
 
@@ -146,34 +153,51 @@ async def get_contract_results(
             error=str(e)
         )
 
-@router.get("/{contract_id}", response_model=dict)
-async def get_contract(
+@router.get("/", response_model=dict)
+async def list_contracts(
+    skip: int = 0,
+    limit: int = 100,
+    state: Optional[str] = None,
+    status: Optional[str] = None,
+    db: Session = Depends(get_db)
+):
+    try:
+        contract_service = ContractService()
+        contracts = contract_service.get_contracts(db, skip, limit, state, status)
+        
+        return create_success_response(
+            data=[ContractResponse.from_orm(contract).dict() for contract in contracts],
+            message=f"Retrieved {len(contracts)} contracts"
+        )
+        
+    except Exception as e:
+        return create_error_response(
+            message="Failed to retrieve contracts",
+            error=str(e)
+        )
+
+@router.get("/{contract_id}/status", response_model=dict)
+async def refresh_contract_status(
     contract_id: str,
     db: Session = Depends(get_db)
 ):
     try:
         contract_service = ContractService()
-        result = contract_service.get_contract(db, contract_id)
+        contract = contract_service.get_contract(db, contract_id)
         
-        if not result["success"]:
-            if "not found" in result["error"]:
-                raise HTTPException(status_code=404, detail="Contract not found")
-            return create_error_response(
-                message="Failed to get contract",
-                error=result["error"]
-            )
-        
-        contract_response = ContractResponse.from_orm(result["contract"])
+        if not contract:
+            raise HTTPException(status_code=404, detail="Contract not found")
         
         return create_success_response(
-            data=contract_response.dict(),
-            message="Contract retrieved successfully"
+            data=ContractResponse.from_orm(contract).dict(),
+            message="Contract status refreshed successfully"
         )
         
     except HTTPException:
         raise
     except Exception as e:
         return create_error_response(
-            message="Failed to get contract",
+            message="Failed to refresh contract status",
             error=str(e)
         )
+
