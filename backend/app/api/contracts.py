@@ -200,4 +200,3 @@ async def refresh_contract_status(
             message="Failed to refresh contract status",
             error=str(e)
         )
-

@@ -186,10 +186,11 @@ class ContractService:
                     "task_id": None
                 }
             
+            # Queue Stage 1: Preprocessing (Stage 1 will queue Stage 2 when complete)
             task_id = self.celery_service.queue_preprocessing_task(contract_id)
             
             contract.celery_task_id = task_id
-            # Status will change to "queued" when worker picks it up
+            contract.status = "queued"
             db.commit()
             
             return {

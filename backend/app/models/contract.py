@@ -18,7 +18,7 @@ class Contract(BaseModel):
     state = Column(String(2), nullable=False)
     contract_type = Column(String(50), nullable=True)
     
-    status = Column(String(20), nullable=False, default="uploaded")
+    status = Column(String(20), nullable=False, default="pending")
 
     processing_started_at = Column(DateTime, nullable=True)
     processing_completed_at = Column(DateTime, nullable=True)

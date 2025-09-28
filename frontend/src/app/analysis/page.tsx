@@ -17,71 +17,113 @@ export default function AnalysisPage() {
   const [refreshingAll, setRefreshingAll] = useState(false);
   const [refreshingContract, setRefreshingContract] = useState<string | null>(null);
   const [deletingContract, setDeletingContract] = useState<string | null>(null);
+  const [pollingIntervals, setPollingIntervals] = useState<Map<string, NodeJS.Timeout>>(new Map());
 
   const getStatusBadge = (status: string) => {
-    const baseClasses = "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium";
+    const baseClasses = "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize";
     
-    switch (status) {
-      case 'completed':
-        return (
-          <span className={`${baseClasses} bg-green-100 text-green-800`}>
-            <CheckCircle className="h-3 w-3 mr-1" />
-            Completed
-          </span>
-        );
-      case 'preprocessed':
-        return (
-          <span className={`${baseClasses} bg-blue-100 text-blue-800`}>
-            <CheckCircle className="h-3 w-3 mr-1" />
-            Preprocessed
-          </span>
-        );
-      case 'processing':
-        return (
-          <span className={`${baseClasses} bg-yellow-100 text-yellow-800`}>
-            <Clock className="h-3 w-3 mr-1" />
-            Processing
-          </span>
-        );
-      case 'failed':
-      case 'error':
-        return (
-          <span className={`${baseClasses} bg-red-100 text-red-800`}>
-            <XCircle className="h-3 w-3 mr-1" />
-            Error
-          </span>
-        );
-      case 'uploading':
-        return (
-          <span className={`${baseClasses} bg-blue-100 text-blue-800`}>
-            <LoadingSpinner size="sm" />
-            <span className="ml-1">Uploading</span>
-          </span>
-        );
-      case 'uploaded':
-        return (
-          <span className={`${baseClasses} bg-gray-100 text-gray-800`}>
-            <CheckCircle className="h-3 w-3 mr-1" />
-            Uploaded
-          </span>
-        );
-      case 'queued':
-        return (
-          <span className={`${baseClasses} bg-purple-100 text-purple-800`}>
-            <Clock className="h-3 w-3 mr-1" />
-            Queued
-          </span>
-        );
-      default:
-        return (
-          <span className={`${baseClasses} bg-gray-100 text-gray-800`}>
-            <Clock className="h-3 w-3 mr-1" />
-            Pending
-          </span>
-        );
+    if (status === 'completed') {
+      return (
+        <span className={`${baseClasses} bg-green-100 text-green-800`}>
+          <CheckCircle className="h-3 w-3 mr-1" />
+          {status}
+        </span>
+      );
+    } else if (status === 'failed' || status === 'error') {
+      return (
+        <span className={`${baseClasses} bg-red-100 text-red-800`}>
+          <XCircle className="h-3 w-3 mr-1" />
+          {status}
+        </span>
+      );
+    } else {
+      return (
+        <span className={`${baseClasses} bg-yellow-100 text-yellow-800`}>
+          <Clock className="h-3 w-3 mr-1" />
+          {status}
+        </span>
+      );
     }
   };
- 
+  const needsPolling = (status: string) => {
+    return !['completed', 'failed', 'error'].includes(status);
+  };
+
+  // Start polling for a specific contract
+  const startPolling = (contractId: string) => {
+    // Clear existing interval if any
+    const existingInterval = pollingIntervals.get(contractId);
+    if (existingInterval) {
+      clearInterval(existingInterval);
+    }
+
+    const interval = setInterval(async () => {
+      try {
+        const response = await apiClient.refreshContractStatus(contractId);
+        
+        if (response.success && response.data) {
+          const updatedContract = response.data;
+          
+          setContracts(prev => {
+            const updated = prev.map(contract => {
+              if (contract.id === contractId) {
+                return {
+                  ...contract,
+                  status: updatedContract.status,
+                  processing_progress: updatedContract.processing_progress,
+                  processing_message: updatedContract.processing_message,
+                };
+              }
+              return contract;
+            });
+            return updated;
+          });
+
+          // Stop polling if contract is completed or failed
+          if (!needsPolling(updatedContract.status)) {
+            clearInterval(interval);
+            setPollingIntervals(prev => {
+              const newMap = new Map(prev);
+              newMap.delete(contractId);
+              return newMap;
+            });
+          }
+        } else {
+          // If contract not found (404) or other error, stop polling
+          clearInterval(interval);
+          setPollingIntervals(prev => {
+            const newMap = new Map(prev);
+            newMap.delete(contractId);
+            return newMap;
+          });
+        }
+      } catch (error) {
+        // Stop polling on persistent errors (like 404)
+        clearInterval(interval);
+        setPollingIntervals(prev => {
+          const newMap = new Map(prev);
+          newMap.delete(contractId);
+          return newMap;
+        });
+      }
+    }, 1000); // Poll every 1 second for faster updates
+
+    setPollingIntervals(prev => new Map(prev).set(contractId, interval));
+  };
+
+  // Stop polling for a specific contract
+  const stopPolling = (contractId: string) => {
+    const interval = pollingIntervals.get(contractId);
+    if (interval) {
+      clearInterval(interval);
+      setPollingIntervals(prev => {
+        const newMap = new Map(prev);
+        newMap.delete(contractId);
+        return newMap;
+      });
+    }
+  };
+
   useEffect(() => {
     const fetchContracts = async () => {
       try {
@@ -103,6 +145,13 @@ export default function AnalysisPage() {
             uploadedAt: new Date(contract.created_at),
           }));
           setContracts(contractFiles);
+
+          // Start polling for contracts that need it
+          contractFiles.forEach(contract => {
+            if (needsPolling(contract.status)) {
+              startPolling(contract.id);
+            }
+          });
         }
       } catch (error) {
         console.error('Failed to fetch contracts:', error);
@@ -112,7 +161,23 @@ export default function AnalysisPage() {
     };
 
     fetchContracts();
+
+    // Cleanup intervals on unmount
+    return () => {
+      pollingIntervals.forEach(interval => clearInterval(interval));
+    };
   }, []);
+
+  // Effect to manage polling when contracts change
+  useEffect(() => {
+    contracts.forEach(contract => {
+      if (needsPolling(contract.status) && !pollingIntervals.has(contract.id)) {
+        startPolling(contract.id);
+      } else if (!needsPolling(contract.status) && pollingIntervals.has(contract.id)) {
+        stopPolling(contract.id);
+      }
+    });
+  }, [contracts]);
 
   const handleRefreshStatus = async (contractId: string) => {
     try {
@@ -321,15 +386,22 @@ export default function AnalysisPage() {
                   <div className="flex items-center space-x-4">
                     <FileText className="h-10 w-10 text-blue-600" />
                     <div className="flex-1">
-                      <div className="flex items-center space-x-3 mb-1">
-                        <h3 className="text-sm font-medium text-gray-900">{contract.name}</h3>
+                      <div className="flex items-center space-x-3">
+                        <div className="flex items-center space-x-2">
+                          <h3 className="text-sm font-medium text-gray-900">{contract.name}</h3>
+                          {pollingIntervals.has(contract.id) && (
+                            <div className="flex items-center">
+                              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                            </div>
+                          )}
+                        </div>
                         {getStatusBadge(contract.status)}
                       </div>
-                      <p className="text-sm text-gray-500">
+                      <p className="text-sm text-gray-500 mt-1">
                         {formatFileSize(contract.size)} • {contract.state} • 
                         {contract.uploadedAt.toLocaleDateString()}
                       </p>
-                      {((contract.status === 'processing' || contract.status === 'uploaded' || contract.status === 'queued' || contract.status === 'preprocessed') && (contract.processing_message || contract.processing_progress !== undefined)) && (
+                      {(contract.processing_message || contract.processing_progress !== undefined) && (
                         <div className="mt-2">
                           <div className="flex items-center space-x-2">
                             {contract.processing_message && (

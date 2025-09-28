@@ -7,7 +7,7 @@ export interface UseContractUploadReturn {
   contracts: ContractFile[];
   isUploading: boolean;
   uploadProgress: { [key: string]: number };
-  uploadContract: (file: File, state: 'TN' | 'WA') => Promise<void>;
+  uploadContract: (file: File, state: 'TN' | 'WA', onSuccess?: () => void) => Promise<void>;
   removeContract: (id: string) => void;
   error: string | null;
   successMessage: string | null;
@@ -36,7 +36,7 @@ export function useContractUpload(): UseContractUploadReturn {
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  const uploadContract = useCallback(async (file: File, state: 'TN' | 'WA') => {
+  const uploadContract = useCallback(async (file: File, state: 'TN' | 'WA', onSuccess?: () => void) => {
     const tempId = generateId();
     const newContract: ContractFile = {
       id: tempId,
@@ -80,6 +80,11 @@ export function useContractUpload(): UseContractUploadReturn {
         const allUploaded = contracts.every(c => c.status === 'uploaded' || c.status === 'error');
         if (allUploaded) {
           setSuccessMessage('All files uploaded successfully! Check the Analysis page to monitor processing status.');
+        }
+        
+        // Call onSuccess callback if provided
+        if (onSuccess) {
+          onSuccess();
         }
       } else {
         setContracts(prev =>

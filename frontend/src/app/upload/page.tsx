@@ -1,10 +1,20 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { useContractUpload } from '../../hooks/useContractUpload';
 import ContractUpload from '../../components/contract/ContractUpload';
 
 export default function UploadPage() {
+  const router = useRouter();
   const { contracts, isUploading, uploadProgress, uploadContract, removeContract, error, successMessage } = useContractUpload();
+
+  const handleUpload = async (file: File, state: 'TN' | 'WA') => {
+    await uploadContract(file, state, () => {
+      setTimeout(() => {
+        router.push('/analysis');
+      }, 500);  
+    });
+  };
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -45,7 +55,7 @@ export default function UploadPage() {
 
       <div className="bg-white rounded-lg shadow-sm p-8">
         <ContractUpload
-          onUpload={uploadContract}
+          onUpload={handleUpload}
           contracts={contracts}
           onRemove={removeContract}
           isUploading={isUploading}

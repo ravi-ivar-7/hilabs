@@ -15,9 +15,17 @@ class CeleryService:
     
     def queue_preprocessing_task(self, contract_id: str) -> str:
         task = self.celery_app.send_task(
-            'tasks.contract_preprocessing.extract_contract_text',
+            'tasks.stage1_preprocessing.preprocess_contract',
             args=[contract_id],
             queue='contract_preprocessing'
+        )
+        return task.id
+    
+    def queue_classification_task(self, contract_id: str) -> str:
+        task = self.celery_app.send_task(
+            'tasks.stage2_classification.classify_contract',
+            args=[contract_id],
+            queue='contract_classification'
         )
         return task.id
     

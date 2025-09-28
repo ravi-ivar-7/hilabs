@@ -36,16 +36,16 @@ echo "✅ Worker environment setup complete!"
 # Function to start worker
 start_worker() {
     echo ""
-    echo "🏃 Starting Celery worker for contract preprocessing..."
-    echo "📍 Queue: contract_preprocessing"
+    echo "🏃 Starting Celery worker for contract processing..."
+    echo "📍 Queues: contract_preprocessing, contract_classification"
     echo "🔗 Broker: redis://localhost:6379/0"
     echo ""
     
     # Start the worker with proper configuration
-    celery -A tasks.contract_preprocessing worker \
+    celery -A worker worker \
         --loglevel=info \
         --concurrency=2 \
-        --queues=contract_preprocessing \
+        --queues=contract_preprocessing,contract_classification \
         --hostname=worker@%h
 }
 
@@ -53,7 +53,7 @@ start_worker() {
 monitor_worker() {
     echo ""
     echo "📊 Starting Celery monitoring..."
-    celery -A tasks.contract_preprocessing flower --port=5555
+    celery -A worker flower --port=5555
 }
 
 # Check if Redis is running
