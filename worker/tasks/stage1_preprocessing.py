@@ -2,28 +2,20 @@ import sys
 import os
 from pathlib import Path
 
-# Add backend to Python path
 backend_path = Path(__file__).parent.parent.parent / "backend"
 sys.path.insert(0, str(backend_path))
 
-# Set database path for worker
 os.environ['DATABASE_URL'] = f"sqlite:///{backend_path}/contracts.db"
 
-from sqlalchemy.orm import Session
 from datetime import datetime
 import logging
 
-# Import backend modules
 from app.core.database import get_db
 from app.models.contract import Contract, FileRecord, ProcessingLog
-from app.services.filesystem_service import FileSystemService
 
-# Import preprocessing modules
 from preprocessing.pdf_extractor import PDFExtractor
 from preprocessing.text_cleaner import TextCleaner
-from preprocessing.metadata_extractor import MetadataExtractor
 
-# Import shared Celery app
 from celery_app import celery_app
 
 logger = logging.getLogger(__name__)
@@ -32,22 +24,18 @@ logger = logging.getLogger(__name__)
 def preprocess_contract(self, contract_id: str):
     """Extract text from contract PDF - Phase 2 preprocessing"""
     try:
-        # Get database session
         db = next(get_db())
         
-        # Get contract
         contract = db.query(Contract).filter(Contract.id == contract_id).first()
         if not contract:
             logger.error(f"Contract {contract_id} not found")
             return {"success": False, "error": "Contract not found"}
         
-        # Update status to preprocessing with message and progress
         contract.status = "preprocessing"
         contract.processing_message = "Stage 1: Starting text extraction"
         contract.processing_progress = 0
         contract.processing_started_at = datetime.utcnow()
         
-        # Add processing log
         log_entry = ProcessingLog(
             contract_id=contract_id,
             level="INFO",
@@ -60,11 +48,8 @@ def preprocess_contract(self, contract_id: str):
         
         self.update_state(state='PROGRESS', meta={'progress': 0, 'message': 'Stage 1: Starting text extraction'})
         
-        # Initialize services
-        filesystem_service = FileSystemService()
         pdf_extractor = PDFExtractor()
         text_cleaner = TextCleaner()
-        metadata_extractor = MetadataExtractor()
         
         # Step 1: Loading PDF (20% progress)
         contract.processing_message = "Stage 1: Loading PDF file for preprocessing"
@@ -86,7 +71,6 @@ def preprocess_contract(self, contract_id: str):
             contract.processing_progress = 0
             contract.error_message = f"Text extraction failed: {extraction_result['error']}"
             
-            # Add error log
             error_log = ProcessingLog(
                 contract_id=contract_id,
                 level="ERROR",
@@ -104,7 +88,6 @@ def preprocess_contract(self, contract_id: str):
         db.commit()
         self.update_state(state='PROGRESS', meta={'progress': 60, 'message': 'Stage 1: Extracting and cleaning text from PDF'})
         
-        # Add progress log
         progress_log = ProcessingLog(
             contract_id=contract_id,
             level="INFO",
@@ -154,7 +137,6 @@ def preprocess_contract(self, contract_id: str):
         contract.status = "preprocessing_completed"
         contract.processing_completed_at = datetime.utcnow()
         
-        # Add completion log
         completion_log = ProcessingLog(
             contract_id=contract_id,
             level="INFO",
@@ -164,7 +146,6 @@ def preprocess_contract(self, contract_id: str):
         )
         db.add(completion_log)
         
-        # COMMIT FIRST to ensure status is saved before queuing Stage 2
         db.commit()
         
         # Queue Stage 2: Classification
@@ -175,7 +156,6 @@ def preprocess_contract(self, contract_id: str):
                 queue='contract_classification'
             )
             
-            # Update contract with new task ID
             contract.celery_task_id = classification_task.id
             contract.processing_message = "Stage 1 completed, Stage 2 classification queued"
             db.commit()
@@ -204,7 +184,6 @@ def preprocess_contract(self, contract_id: str):
     except Exception as e:
         logger.error(f"Error processing contract {contract_id}: {str(e)}")
         
-        # Update contract status to failed with proper logging
         try:
             db = next(get_db())
             contract = db.query(Contract).filter(Contract.id == contract_id).first()
@@ -215,7 +194,6 @@ def preprocess_contract(self, contract_id: str):
                 contract.error_message = str(e)
                 contract.processing_completed_at = datetime.utcnow()
                 
-                # Add error log
                 error_log = ProcessingLog(
                     contract_id=contract_id,
                     level="ERROR",

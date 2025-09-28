@@ -10,6 +10,8 @@ upload/contracts-wa/*
 !upload/contracts-tn/.gitkeep
 !upload/contracts-wa/.gitkeep
 
+data/templates/cache
+
 # Node.js / Frontend
 node_modules/
 .next/

@@ -7,11 +7,9 @@ import os
 from pathlib import Path
 from celery import Celery
 
-# Add backend to Python path
 backend_path = Path(__file__).parent.parent / "backend"
 sys.path.insert(0, str(backend_path))
 
-# Set database path for worker
 os.environ['DATABASE_URL'] = f"sqlite:///{backend_path}/contracts.db"
 
 # Create shared Celery app

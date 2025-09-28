@@ -1,11 +1,8 @@
 #!/bin/bash
 
-# HiLabs Worker Setup Script
-# Creates virtual environment and starts the preprocessing worker
-
 set -e
 
-echo "🚀 Setting up HiLabs Preprocessing Worker..."
+echo "🚀 Setting up Preprocessing Worker..."
 
 # Check if we're in the worker directory
 if [ ! -f "requirements.txt" ]; then
@@ -13,27 +10,22 @@ if [ ! -f "requirements.txt" ]; then
     exit 1
 fi
 
-# Create virtual environment if it doesn't exist
 if [ ! -d "venv" ]; then
     echo "📦 Creating virtual environment..."
     python3 -m venv venv
 fi
 
-# Activate virtual environment
 echo "🔧 Activating virtual environment..."
 source venv/bin/activate
 
-# Upgrade pip
 echo "⬆️  Upgrading pip..."
 pip install --upgrade pip
 
-# Install dependencies
 echo "📚 Installing dependencies..."
 pip install -r requirements.txt
 
 echo "✅ Worker environment setup complete!"
 
-# Function to start worker
 start_worker() {
     echo ""
     echo "🏃 Starting Celery worker for contract processing..."
@@ -49,18 +41,50 @@ start_worker() {
         --hostname=worker@%h
 }
 
-# Function to monitor worker
+stop_worker() {
+    echo "🛑 Stopping Celery worker..."
+    pkill -f "celery.*worker" || echo "No worker process found"
+}
+
+restart_worker() {
+    echo "🔄 Restarting Celery worker..."
+    pkill -f "celery.*worker" || echo "No existing worker to stop"
+    sleep 2
+    if check_redis; then
+        start_worker
+    fi
+}
+
+check_worker_status() {
+    echo "🔍 Checking worker status..."
+    
+    if pgrep -f "celery.*worker" > /dev/null; then
+        echo "✅ Celery worker is running"
+        echo "📊 Process info:"
+        pgrep -f "celery.*worker" | while read pid; do
+            echo "   PID: $pid"
+        done
+    else
+        echo "❌ Celery worker is not running"
+    fi
+}
+
 monitor_worker() {
     echo ""
     echo "📊 Starting Celery monitoring..."
+    echo "🌐 Flower will be available at: http://localhost:5555"
+    echo ""
     celery -A worker flower --port=5555
 }
 
-# Check if Redis is running
+stop_monitor() {
+    echo "🛑 Stopping Flower monitoring..."
+    pkill -f "celery.*flower" || echo "No Flower process found"
+}
+
 check_redis() {
     echo "🔍 Checking Redis connection..."
     
-    # Use Python with redis module to check connection (more reliable)
     if source venv/bin/activate && python3 -c "import redis; r = redis.Redis(host='localhost', port=6379, db=0); r.ping()" > /dev/null 2>&1; then
         echo "✅ Redis is running"
         return 0
@@ -72,37 +96,47 @@ check_redis() {
     fi
 }
 
-# Main execution
 case "${1:-start}" in
     "start")
         if check_redis; then
             start_worker
         fi
         ;;
+    "stop")
+        stop_worker
+        ;;
+    "restart")
+        restart_worker
+        ;;
+    "status")
+        check_worker_status
+        ;;
     "monitor")
         if check_redis; then
             monitor_worker
         fi
         ;;
-    "setup-only")
-        echo "🎉 Setup complete! Use './setup-worker.sh start' to run the worker"
+    "stop-monitor")
+        stop_monitor
         ;;
-    "help")
-        echo "Usage: $0 [command]"
+    "setup")
+        echo "✅ Setup already completed during script execution"
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|restart|status|monitor|stop-monitor|setup}"
         echo ""
         echo "Commands:"
-        echo "  start       Setup environment and start worker (default)"
-        echo "  monitor     Start Flower monitoring interface"
-        echo "  setup-only  Only setup environment, don't start worker"
-        echo "  help        Show this help message"
+        echo "  start        - Setup environment and start worker (default)"
+        echo "  stop         - Stop the Celery worker"
+        echo "  restart      - Restart the Celery worker"
+        echo "  status       - Check if worker is running"
+        echo "  monitor      - Start Flower monitoring interface"
+        echo "  stop-monitor - Stop Flower monitoring"
+        echo "  setup        - Setup is done automatically"
         echo ""
         echo "Prerequisites:"
         echo "  - Redis server running on localhost:6379"
         echo "  - Backend database migrated and running"
-        ;;
-    *)
-        echo "❌ Unknown command: $1"
-        echo "Use '$0 help' for usage information"
         exit 1
         ;;
 esac
