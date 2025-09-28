@@ -23,7 +23,7 @@ npm-debug.log*
 .pnpm-debug.log*
 
 # Redis data directory
-infra/redis/data/
+redis/data/
 
 # Python
 __pycache__/
