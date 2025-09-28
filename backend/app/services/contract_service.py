@@ -121,10 +121,9 @@ class ContractService:
                     "error": "Contract not found"
                 }
             
-            self.filesystem_service.delete_file(contract.storage_bucket, contract.storage_object_key)
-            
-            text_file_key = f"{contract.id}_extracted.txt"
-            self.filesystem_service.delete_file(contract.storage_bucket, text_file_key)
+            # Delete all associated files via FileRecord relationships
+            for file_record in contract.file_records:
+                self.filesystem_service.delete_file(file_record.storage_bucket, file_record.storage_object_key)
             
             db.delete(contract)
             db.commit()
@@ -147,6 +146,8 @@ class ContractService:
         db: Session, 
         contract_id: str, 
         status: str,
+        processing_message: Optional[str] = None,
+        processing_progress: Optional[int] = None,
         error_message: Optional[str] = None
     ) -> bool:
         try:
@@ -155,6 +156,10 @@ class ContractService:
                 return False
             
             contract.status = status
+            if processing_message:
+                contract.processing_message = processing_message
+            if processing_progress is not None:
+                contract.processing_progress = processing_progress
             if error_message:
                 contract.error_message = error_message
             
@@ -225,8 +230,8 @@ class ContractService:
                 "status": {
                     "contract_id": str(contract.id),
                     "status": contract.status,
-                    "progress": progress,
-                    "message": contract.error_message,
+                    "progress": contract.processing_progress or progress,
+                    "message": contract.processing_message or contract.error_message,
                     "created_at": contract.created_at,
                     "processing_started_at": contract.processing_started_at,
                     "processing_completed_at": contract.processing_completed_at,

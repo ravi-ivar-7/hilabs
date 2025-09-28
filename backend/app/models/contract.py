@@ -3,7 +3,6 @@ Contract and file storage models for the healthcare contract classification syst
 """
 from sqlalchemy import Column, String, Text, Integer, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
-from sqlalchemy.dialects.postgresql import UUID
 
 from .base import BaseModel
 
@@ -20,8 +19,11 @@ class Contract(BaseModel):
     contract_type = Column(String(50), nullable=True)
     
     status = Column(String(20), nullable=False, default="uploaded")
+
     processing_started_at = Column(DateTime, nullable=True)
     processing_completed_at = Column(DateTime, nullable=True)
+    processing_message = Column(Text, nullable=True)
+    processing_progress = Column(Integer, nullable=True, default=0)
     
     storage_bucket = Column(String(100), nullable=False)
     storage_object_key = Column(String(500), nullable=False)
@@ -33,6 +35,7 @@ class Contract(BaseModel):
     non_standard_clauses = Column(Integer, nullable=True)
     
     error_message = Column(Text, nullable=True)
+
     
     file_records = relationship("FileRecord", back_populates="contract", cascade="all, delete-orphan")
     clauses = relationship("ContractClause", back_populates="contract", cascade="all, delete-orphan")
