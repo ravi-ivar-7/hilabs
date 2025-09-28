@@ -3,6 +3,12 @@ docs
 .env
 worker
 
+# Upload directories - contract files (ignore files but keep folders)
+upload/contracts-tn/*
+upload/contracts-wa/*
+!upload/contracts-tn/.gitkeep
+!upload/contracts-wa/.gitkeep
+
 # Node.js / Frontend
 node_modules/
 .next/
