@@ -201,6 +201,38 @@ export default function ContractResults({ contractId, onGetResults }: ContractRe
           <FileText className="h-6 w-6 text-blue-600 mr-3" />
           <h2 className="text-xl font-semibold text-gray-900">Contract Analysis Results</h2>
         </div>
+
+        {/* Contract Information */}
+        <div className="bg-gray-50 p-4 rounded-lg mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="flex flex-col">
+              <span className="text-sm font-medium text-gray-700">File Name</span>
+              <span className="text-sm text-gray-900 mt-1 break-all">{contract.original_filename}</span>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-sm font-medium text-gray-700">State</span>
+              <span className="text-sm text-gray-900 mt-1 uppercase font-medium">{contract.state}</span>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-sm font-medium text-gray-700">Status</span>
+              <span className={`text-xs mt-1 px-2 py-1 rounded-full font-medium inline-block w-fit ${
+                contract.status === 'completed' ? 'bg-green-100 text-green-700' : 
+                contract.status === 'processing' ? 'bg-yellow-100 text-yellow-700' : 
+                'bg-gray-100 text-gray-700'
+              }`}>
+                {contract.status}
+              </span>
+            </div>
+            {contract.processing_completed_at && (
+              <div className="flex flex-col">
+                <span className="text-sm font-medium text-gray-700">Completed</span>
+                <span className="text-sm text-gray-900 mt-1">
+                  {new Date(contract.processing_completed_at).toLocaleString()}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
         
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <div className="bg-blue-50 p-4 rounded-lg">
@@ -221,14 +253,63 @@ export default function ContractResults({ contractId, onGetResults }: ContractRe
           </div>
         </div>
 
-        <div className="text-sm text-gray-600">
-          <p><strong>File:</strong> {contract.original_filename}</p>
-          <p><strong>State:</strong> {contract.state}</p>
-          <p><strong>Status:</strong> {contract.status}</p>
-          {contract.processing_completed_at && (
-            <p><strong>Completed:</strong> {new Date(contract.processing_completed_at).toLocaleString()}</p>
-          )}
+        {/* Attribute Analysis */}
+        <div className="mb-6">
+          <h4 className="text-lg font-medium text-gray-900 mb-3">Attribute Analysis</h4>
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+            {(() => {
+              const attributeCounts = clauses.reduce((acc, clause) => {
+                const attr = clause.attribute_name || 'Unknown';
+                if (!acc[attr]) {
+                  acc[attr] = { total: 0, standard: 0, nonStandard: 0, ambiguous: 0 };
+                }
+                acc[attr].total++;
+                
+                const classification = clause.classification?.toLowerCase();
+                if (classification === 'standard') acc[attr].standard++;
+                else if (classification === 'non-standard') acc[attr].nonStandard++;
+                else if (classification === 'ambiguous') acc[attr].ambiguous++;
+                
+                return acc;
+              }, {} as Record<string, { total: number; standard: number; nonStandard: number; ambiguous: number }>);
+
+              return Object.entries(attributeCounts).map(([attribute, counts]) => (
+                <div key={attribute} className="bg-gray-50 p-3 rounded-lg border">
+                  <h5 className="text-sm font-medium text-gray-800 mb-2">{attribute}</h5>
+                  <div className="space-y-1 text-xs">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Total:</span>
+                      <span className="font-medium text-gray-900">{counts.total}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-green-600">Standard:</span>
+                      <span className="font-medium text-green-700">{counts.standard}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-red-600">Non-Standard:</span>
+                      <span className="font-medium text-red-700">{counts.nonStandard}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-yellow-600">Ambiguous:</span>
+                      <span className="font-medium text-yellow-700">{counts.ambiguous}</span>
+                    </div>
+                    {counts.total > 0 && (
+                      <div className="pt-1 mt-1 border-t border-gray-200">
+                        <div className="flex justify-between text-xs">
+                          <span className="text-gray-500">Standard %:</span>
+                          <span className="font-medium text-gray-700">
+                            {Math.round((counts.standard / counts.total) * 100)}%
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ));
+            })()}
+          </div>
         </div>
+
       </div>
 
       {/* Clauses Analysis */}

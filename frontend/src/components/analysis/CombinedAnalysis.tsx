@@ -205,9 +205,9 @@ export default function CombinedAnalysis({ contracts }: CombinedAnalysisProps) {
           <h2 className="text-xl font-semibold text-gray-900">Combined Contract Analysis</h2>
         </div>
 
-        <div className="bg-gray-50 p-6 rounded-lg mb-8">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Clause Classification Summary</h3>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="bg-gray-50 p-4 rounded-lg mb-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-3">Clause Classification Summary</h3>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {(() => {
               const classifiedTotal = analysisData.standardClauses + analysisData.nonStandardClauses + analysisData.ambiguousClauses;
               return (
@@ -260,61 +260,75 @@ export default function CombinedAnalysis({ contracts }: CombinedAnalysisProps) {
        
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-gray-50 p-6 rounded-lg">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">State Breakdown</h3>
-            <div className="space-y-4">
-              {Object.entries(analysisData.stateBreakdown).map(([state, data]) => (
-                <div key={state} className="bg-white p-4 rounded border">
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-medium text-gray-900">{state === 'TN' ? 'Tennessee' : 'Washington'}</h4>
-                    <span className="text-sm text-gray-500">{data.contracts} contracts</span>
-                  </div>
-                  <div className="grid grid-cols-3 gap-2 text-sm">
-                    <div className="text-center">
-                      <p className="font-medium text-green-600">{data.standard}</p>
-                      <p className="text-gray-500">Standard</p>
+        {/* Attribute Analysis */}
+        <div className="mb-6">
+          <h4 className="text-lg font-medium text-gray-900 mb-3">Attribute Analysis</h4>
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+            {Object.entries(analysisData.attributeBreakdown).map(([attribute, data]) => {
+              const total = data.standard + data.nonStandard + data.ambiguous;
+              const standardPct = total > 0 ? Math.round((data.standard / total) * 100) : 0;
+              
+              return (
+                <div key={attribute} className="bg-gray-50 p-3 rounded-lg border">
+                  <h5 className="text-sm font-medium text-gray-800 mb-2">{attribute}</h5>
+                  <div className="space-y-1 text-xs">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Total:</span>
+                      <span className="font-medium text-gray-900">{total}</span>
                     </div>
-                    <div className="text-center">
-                      <p className="font-medium text-red-600">{data.nonStandard}</p>
-                      <p className="text-gray-500">Non-Standard</p>
+                    <div className="flex justify-between">
+                      <span className="text-green-600">Standard:</span>
+                      <span className="font-medium text-green-700">{data.standard}</span>
                     </div>
-                    <div className="text-center">
-                      <p className="font-medium text-yellow-600">{data.ambiguous}</p>
-                      <p className="text-gray-500">Ambiguous</p>
+                    <div className="flex justify-between">
+                      <span className="text-red-600">Non-Standard:</span>
+                      <span className="font-medium text-red-700">{data.nonStandard}</span>
                     </div>
+                    <div className="flex justify-between">
+                      <span className="text-yellow-600">Ambiguous:</span>
+                      <span className="font-medium text-yellow-700">{data.ambiguous}</span>
+                    </div>
+                    {total > 0 && (
+                      <div className="pt-1 mt-1 border-t border-gray-200">
+                        <div className="flex justify-between text-xs">
+                          <span className="text-gray-500">Standard %:</span>
+                          <span className="font-medium text-gray-700">{standardPct}%</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
-              ))}
-            </div>
+              );
+            })}
           </div>
+        </div>
 
-          <div className="bg-gray-50 p-6 rounded-lg">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Attribute Analysis</h3>
-            <div className="space-y-3">
-              {Object.entries(analysisData.attributeBreakdown).map(([attribute, data]) => {
-                const total = data.standard + data.nonStandard + data.ambiguous;
-                const standardPct = total > 0 ? Math.round((data.standard / total) * 100) : 0;
-                
-                return (
-                  <div key={attribute} className="bg-white p-3 rounded border">
-                    <div className="flex items-center justify-between mb-2">
-                      <h4 className="text-sm font-medium text-gray-900">{attribute}</h4>
-                      <span className="text-xs text-gray-500">{total} clauses</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <div className="flex-1 bg-gray-200 rounded-full h-2">
-                        <div 
-                          className="bg-green-500 h-2 rounded-full" 
-                          style={{ width: `${standardPct}%` }}
-                        ></div>
-                      </div>
-                      <span className="text-xs font-medium text-gray-600">{standardPct}%</span>
-                    </div>
+        {/* State Breakdown */}
+        <div className="mb-6">
+          <h4 className="text-lg font-medium text-gray-900 mb-3">State Breakdown</h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {Object.entries(analysisData.stateBreakdown).map(([state, data]) => (
+              <div key={state} className="bg-gray-50 p-4 rounded-lg border">
+                <div className="flex items-center justify-between mb-3">
+                  <h5 className="font-medium text-gray-900">{state === 'TN' ? 'Tennessee' : 'Washington'}</h5>
+                  <span className="text-sm text-gray-500">{data.contracts} contracts</span>
+                </div>
+                <div className="grid grid-cols-3 gap-3 text-sm">
+                  <div className="text-center">
+                    <p className="font-medium text-green-600">{data.standard}</p>
+                    <p className="text-gray-500">Standard</p>
                   </div>
-                );
-              })}
-            </div>
+                  <div className="text-center">
+                    <p className="font-medium text-red-600">{data.nonStandard}</p>
+                    <p className="text-gray-500">Non-Standard</p>
+                  </div>
+                  <div className="text-center">
+                    <p className="font-medium text-yellow-600">{data.ambiguous}</p>
+                    <p className="text-gray-500">Ambiguous</p>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
