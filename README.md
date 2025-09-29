@@ -25,11 +25,7 @@
 ![System Screenshot](data/Screenshot%20from%202025-09-29%2023-44-29.png)
 
 ## Demo Video
-[![Demo Video](data/Screenshot%20from%202025-09-29%2023-44-29.png)](data/Hilabs%20demo.mp4)
-
-**Alternative:** [Watch Demo on Canva](https://www.canva.com/design/DAG0YhtWHVQ/VKSFMlQfL7KJIZRqF0XSWQ/watch)
-
-*Click the image above to view the demo video*
+[Watch Demo on Canva](https://www.canva.com/design/DAG0YhtWHVQ/VKSFMlQfL7KJIZRqF0XSWQ/watch)
 
 ## Quick Setup
 
