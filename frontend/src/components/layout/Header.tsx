@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { FileText, Upload, BarChart3 } from 'lucide-react';
+import { FileText, Upload, BarChart3, Github } from 'lucide-react';
 
 export default function Header() {
   return (
@@ -15,7 +15,7 @@ export default function Header() {
             </Link>
           </div>
           
-          <nav className="flex space-x-8">
+          <nav className="flex items-center space-x-8">
             <Link
               href="/"
               className="text-gray-500 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium"
@@ -36,6 +36,15 @@ export default function Header() {
               <BarChart3 className="h-4 w-4" />
               <span>Analysis</span>
             </Link>
+            <a
+              href="https://github.com/ravi-ivar-7/hilabs"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-gray-500 hover:text-gray-900 px-3 py-2 rounded-md text-sm font-medium flex items-center space-x-1"
+            >
+              <Github className="h-4 w-4" />
+              <span>GitHub</span>
+            </a>
           </nav>
         </div>
       </div>

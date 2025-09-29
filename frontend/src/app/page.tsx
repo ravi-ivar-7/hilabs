@@ -10,8 +10,7 @@ export default function Home() {
           Healthcare Contract Language Classification
         </h1>
         <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-          Advanced AI-powered system to classify healthcare contract clauses as Standard or Non-Standard 
-          by comparing with state-specific templates. Built for HiLabs Hackathon 2025.
+          Built for HiLabs Hackathon 2025.
         </p>
         <div className="flex justify-center space-x-4">
           <Link
@@ -31,30 +30,6 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Features Section */}
-      <div className="grid md:grid-cols-3 gap-8 mb-16">
-        <div className="text-center p-6 bg-white rounded-lg shadow-sm">
-          <Brain className="h-12 w-12 text-blue-600 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold mb-2">Local AI Processing</h3>
-          <p className="text-gray-600">
-            Uses local AI models for secure, offline contract analysis without external APIs
-          </p>
-        </div>
-        <div className="text-center p-6 bg-white rounded-lg shadow-sm">
-          <Shield className="h-12 w-12 text-green-600 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold mb-2">Healthcare Compliant</h3>
-          <p className="text-gray-600">
-            Built with healthcare compliance in mind, including audit trails and validation
-          </p>
-        </div>
-        <div className="text-center p-6 bg-white rounded-lg shadow-sm">
-          <Zap className="h-12 w-12 text-yellow-600 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold mb-2">Fast & Accurate</h3>
-          <p className="text-gray-600">
-            Dual-mode processing for both speed and accuracy, optimized for 8GB systems
-          </p>
-        </div>
-      </div>
 
       {/* How It Works */}
       <div className="bg-white rounded-lg shadow-sm p-8">
@@ -65,7 +40,7 @@ export default function Home() {
               <span className="text-blue-600 font-bold">1</span>
             </div>
             <h3 className="font-semibold mb-2">Upload Contract</h3>
-            <p className="text-sm text-gray-600">Upload PDF contracts and select state (TN/WA)</p>
+            <p className="text-sm text-gray-600">Upload PDF contracts</p>
           </div>
           <div className="text-center">
             <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
