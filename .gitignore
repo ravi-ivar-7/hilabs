@@ -1,10 +1,6 @@
 .windsurf
 .env
 notebooks/outputs
-pipline.md
-approch.md
-approch.md
-architecture.md
 
 # Virtual environments
 venv/
