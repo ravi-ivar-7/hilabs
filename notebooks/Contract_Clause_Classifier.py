@@ -78,9 +78,9 @@ PLACEHOLDER_MAP = {
     r"\b(Medically\s+Necessary|Medical\s+Necessity)\b": "<MEDICAL_NECESSITY>",
 }
 
-FUZZY_THRESHOLD = 92
-SBERT_THRESHOLD = 0.86
-SBERT_AMBIG_LOW, SBERT_AMBIG_HIGH = 0.75, 0.86
+FUZZY_THRESHOLD = 85
+SBERT_THRESHOLD = 0.75
+SBERT_AMBIG_LOW, SBERT_AMBIG_HIGH = 0.65, 0.75
 
 USE_SPACY_MODEL = "en_core_web_sm"
 USE_SBERT_MODEL = "sentence-transformers/all-MiniLM-L6-v2"

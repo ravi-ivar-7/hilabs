@@ -77,11 +77,11 @@ TN_TEMPLATE_CLAUSES = {
 
 # Extracted from actual WA template PDF 
 WA_TEMPLATE_CLAUSES = {
-    "Medicaid Timely Filing": "Provider must submit a request for an adjustment to Plan in accordance with the provider manual(s). Provider shall be solely responsible to the Member for treatment, medical care, and advice with respect to the provision of Health Services.",
+    "Medicaid Timely Filing": "Unless otherwise instructed, or required by Regulatory Requirements, Provider shall submit Claims for Medicaid Claims.",
     "Medicare Timely Filing": "Provider shall submit Claims to Plan, using appropriate and current Coded Service Identifier(s), within three hundred sixty-five (365) days from the date the Health Services are rendered or Plan may refuse payment. If Plan is the secondary payor, the three hundred sixty-five (365) day period will not begin until Provider receives notification of primary payor's responsibility.",
-    "No Steerage/SOC": "Provider shall be eligible to participate only in those Networks designated on the Provider Networks Attachment",
+    "No Steerage/SOC": "Provider shall be eligible to participate only in those Networks designated on the Provider Networks Attachment of this Agreement",
     "Medicaid Fee Schedule": "one hundred percent (100%) of Eligible Charges for Covered Services, or the total reimbursement amount that Provider and have agreed upon as set forth in the Compensation Schedule. The Rate includes applicable Cost Shares, and shall represent payment in full to Provider for Covered Services.",
-    "Medicare Fee Schedule": "Medicare Advantage Network means Network of Providers that provides MA Covered Services to MA Members. Related Entity(ies) means any entity that is related to by common ownership or control and performs some of management functions under contract or delegation."
+    "Medicare Fee Schedule": "As a participant in Plan's Medicare Advantage Network, Provider will render MA Covered Services to MA Members enrolled in Plan's Medicare Advantage Program in accordance with the terms and conditions of the Agreement."
 }
 
 @dataclass

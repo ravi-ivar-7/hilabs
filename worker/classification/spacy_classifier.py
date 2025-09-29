@@ -50,10 +50,10 @@ class SpacyClassifier:
         self.target_attributes = target_attributes
         
         # Classification thresholds, change these based on requirements
-        self.fuzzy_threshold = 70
-        self.sbert_threshold = 0.65
-        self.sbert_ambig_low = 0.60
-        self.sbert_ambig_high = 0.75
+        self.fuzzy_threshold = 70  # Lowered for template matching
+        self.sbert_threshold = 0.60  # Lowered for template matching
+        self.sbert_ambig_low = 0.50
+        self.sbert_ambig_high = 0.70
         
         # Initialize spaCy model
         try:
@@ -77,24 +77,24 @@ class SpacyClassifier:
         
         self.attribute_patterns = {
             "Medicaid Timely Filing": [
-                r"medicaid.*claim.*\d+.*day", r"medicaid.*filing", r"medicaid.*submission",
-                r"120.*day.*medicaid", r"medicaid.*eligibility.*date"
+                r"submit.*claims.*\d+.*days?", r"timely.*filing", r"filing.*deadline",
+                r"claims.*rendered.*refuse payment", r"secondary payor.*\d+.*days?"
             ],
             "Medicare Timely Filing": [
-                r"medicare.*claim.*\d+.*day", r"medicare.*filing", r"medicare.*submission",
-                r"365.*day.*medicare", r"medicare.*secondary.*payor"
+                r"submit.*claims.*\d+.*days?", r"timely.*filing", r"filing.*deadline", 
+                r"claims.*rendered.*refuse payment", r"secondary payor.*\d+.*days?"
             ],
             "No Steerage/SOC": [
-                r"network.*participation", r"provider.*network", r"steerage",
-                r"standard.*care", r"network.*designated", r"participation.*attachment"
+                r"eligible.*participate.*networks", r"provider networks attachment",
+                r"steerage", r"standard.*care", r"soc", r"steering"
             ],
             "Medicaid Fee Schedule": [
-                r"medicaid.*fee.*schedule", r"medicaid.*\d+.*percent", r"medicaid.*eligible.*charge",
-                r"medicaid.*compensation", r"medicaid.*rate"
+                r"eligible charges.*covered services", r"compensation schedule",
+                r"\d+.*percent.*eligible charges", r"cost shares", r"payment.*full"
             ],
             "Medicare Fee Schedule": [
-                r"medicare.*advantage", r"medicare.*fee.*schedule", r"medicare.*eligible.*charge",
-                r"ma.*covered.*service", r"medicare.*rate"
+                r"medicare advantage network", r"ma covered services", r"ma members",
+                r"related entity", r"common ownership.*control", r"management functions"
             ]
         }
     

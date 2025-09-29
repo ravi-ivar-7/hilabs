@@ -50,11 +50,11 @@ REGEX_COL_CANDIDATES = ['Regex']
 # Only these 5 attributes are tracked 
 MAX_TARGET_ATTRIBUTES = 5
 TARGET_ATTRIBUTES = [
-    "Claims Submission & Adjudication",
-    "Compensation / Fee Schedule",
-    "Termination",
-    "Use of Symbols and Marks",
-    "Confidentiality / Provider Information"
+    "Medicaid Timely Filing",
+    "Medicare Timely Filing",
+    "No Steerage/SOC",
+    "Medicaid Fee Schedule",
+    "Medicare Fee Schedule"
 ]
 
 # Tokens that mark clauses as Non-Standard if present
@@ -64,11 +64,11 @@ EXCEPTION_TOKENS = [
     'notwithstanding', 'only if'
 ]
 
-# DeBERTa-optimized thresholds (more conservative for higher precision)
-FUZZY_THRESHOLD = 95                   # Higher threshold since we have DeBERTa
-SBERT_THRESHOLD = 0.90                 # Higher threshold 
-SBERT_AMBIG_LOW, SBERT_AMBIG_HIGH = 0.80, 0.90  # Narrower ambiguous band
-DEBERTA_THRESHOLD = 0.75               # DeBERTa cross-encoder threshold
+# DeBERTa-optimized thresholds (adjusted for template matching)
+FUZZY_THRESHOLD = 85                   # Lowered for better template matching
+SBERT_THRESHOLD = 0.75                 # Lowered for better template matching
+SBERT_AMBIG_LOW, SBERT_AMBIG_HIGH = 0.65, 0.75  # Adjusted ambiguous band
+DEBERTA_THRESHOLD = 0.70               # DeBERTa cross-encoder threshold
 
 # Model toggles - DeBERTa ENABLED
 USE_SPACY_MODEL = "en_core_web_sm"
@@ -377,25 +377,25 @@ def split_into_clauses(text: str) -> List[Dict]:
 
 # Enhanced attribute detection
 ATTRIBUTE_SEEDS = {
-    "Claims Submission & Adjudication": {
-        "keywords": ["claims", "submission", "adjudication", "timely filing", "days"],
-        "regexes": [r"\bclaims?\b.*\b(submission|adjudication|filing)\b", r"\b\d{1,3}\s*days?\b.*\bclaims?\b"]
+    "Medicaid Timely Filing": {
+        "keywords": ["medicaid", "timely filing", "filing deadline", "days", "claim submission"],
+        "regexes": [r"\bmedicaid\b.*\b(timely|filing|deadline)\b", r"\b\d{1,3}\s*days?\b.*\b(medicaid|filing)\b"]
     },
-    "Compensation / Fee Schedule": {
-        "keywords": ["compensation", "fee schedule", "payment", "reimbursement"],
-        "regexes": [r"\b(compensation|fee\s+schedule|payment|reimbursement)\b"]
+    "Medicare Timely Filing": {
+        "keywords": ["medicare", "timely filing", "filing deadline", "days", "claim submission"],
+        "regexes": [r"\bmedicare\b.*\b(timely|filing|deadline)\b", r"\b\d{1,3}\s*days?\b.*\b(medicare|filing)\b"]
     },
-    "Termination": {
-        "keywords": ["termination", "terminate", "end", "expiry"],
-        "regexes": [r"\b(terminat|end|expir)\w*\b"]
+    "No Steerage/SOC": {
+        "keywords": ["steerage", "standard of care", "soc", "steering", "referral"],
+        "regexes": [r"\b(steerage|steering|standard\s+of\s+care|soc)\b"]
     },
-    "Use of Symbols and Marks": {
-        "keywords": ["symbols", "marks", "trademark", "logo", "branding"],
-        "regexes": [r"\b(symbol|mark|trademark|logo|brand)\w*\b"]
+    "Medicaid Fee Schedule": {
+        "keywords": ["medicaid", "fee schedule", "compensation", "payment", "reimbursement"],
+        "regexes": [r"\bmedicaid\b.*\b(fee|schedule|compensation|payment)\b"]
     },
-    "Confidentiality / Provider Information": {
-        "keywords": ["confidential", "provider information", "privacy", "disclosure"],
-        "regexes": [r"\b(confidential|privacy|disclosure|provider\s+information)\b"]
+    "Medicare Fee Schedule": {
+        "keywords": ["medicare", "fee schedule", "compensation", "payment", "reimbursement"],
+        "regexes": [r"\bmedicare\b.*\b(fee|schedule|compensation|payment)\b"]
     }
 }
 
