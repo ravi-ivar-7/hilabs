@@ -42,7 +42,8 @@ export default function ContractUpload({
         }
         
         if (!validateFileSize(file)) {
-          setDragError('File size must be less than 10MB');
+          const maxSizeMB = Math.round(parseInt(process.env.NEXT_PUBLIC_MAX_FILE_SIZE || '524288000') / (1024 * 1024));
+          setDragError(`File size must be less than ${maxSizeMB}MB`);
           return;
         }
 
@@ -63,7 +64,7 @@ export default function ContractUpload({
     accept: {
       'application/pdf': ['.pdf'],
     },
-    maxSize: 10485760, // 10MB
+    maxSize: parseInt(process.env.NEXT_PUBLIC_MAX_FILE_SIZE || '524288000'),
     multiple: true,
   });
 
@@ -97,7 +98,7 @@ export default function ContractUpload({
               Drag & drop PDF contracts here, or click to select files
             </p>
             <p className="text-sm text-gray-500">
-              Maximum file size: 10MB | State detected from filename
+              Maximum file size: {Math.round(parseInt(process.env.NEXT_PUBLIC_MAX_FILE_SIZE || '524288000') / (1024 * 1024))}MB | State detected from filename
             </p>
           </div>
         )}

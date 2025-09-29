@@ -18,7 +18,7 @@ export function validateFileType(file: File): boolean {
   return allowedTypes.includes(file.type);
 }
 
-export function validateFileSize(file: File, maxSize: number = 10485760): boolean {
+export function validateFileSize(file: File, maxSize: number = parseInt(process.env.NEXT_PUBLIC_MAX_FILE_SIZE || '524288000')): boolean {
   return file.size <= maxSize;
 }
 

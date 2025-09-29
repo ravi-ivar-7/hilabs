@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     allowed_origins: list = ["*"]
     allowed_hosts: list = ["localhost", "127.0.0.1", "backend", "*"]
     
-    max_file_size: int = 10 * 1024 * 1024
+    max_file_size: int = 500 * 1024 * 1024
     allowed_file_types: list = ["application/pdf"]
     allowed_states: list = ["TN", "WA"]
     
