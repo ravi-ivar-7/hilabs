@@ -132,9 +132,7 @@ export default function CombinedAnalysis({ contracts }: CombinedAnalysisProps) {
   if (processingContracts.length > 0) {
     return (
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-8 text-center">
-        <div className="flex items-center justify-center mb-4">
-          <LoadingSpinner size="lg" />
-        </div>
+
         <h3 className="text-xl font-semibold text-blue-900 mb-2">Analysis in Progress</h3>
         <p className="text-blue-700 mb-4">
           Waiting for {processingContracts.length} contract{processingContracts.length > 1 ? 's' : ''} to complete classification...
@@ -207,83 +205,59 @@ export default function CombinedAnalysis({ contracts }: CombinedAnalysisProps) {
           <h2 className="text-xl font-semibold text-gray-900">Combined Contract Analysis</h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="bg-blue-50 p-6 rounded-lg">
-            <div className="flex items-center">
-              <FileText className="h-8 w-8 text-blue-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-blue-800">Total Contracts</p>
-                <p className="text-3xl font-bold text-blue-900">{analysisData.totalContracts}</p>
-              </div>
-            </div>
-          </div>
+        <div className="bg-gray-50 p-6 rounded-lg mb-8">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Clause Classification Summary</h3>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            {(() => {
+              const classifiedTotal = analysisData.standardClauses + analysisData.nonStandardClauses + analysisData.ambiguousClauses;
+              return (
+                <>
+                  <div className="text-center">
+                    <div className="flex items-center justify-center mb-2">
+                      <PieChart className="h-6 w-6 text-purple-600 mr-2" />
+                      <span className="text-sm font-medium text-purple-800">Classified</span>
+                    </div>
+                    <p className="text-3xl font-bold text-purple-900">{classifiedTotal}</p>
+                    <p className="text-xs text-purple-700 mt-1">100%</p>
+                  </div>
 
-          <div className="bg-purple-50 p-6 rounded-lg">
-            <div className="flex items-center">
-              <PieChart className="h-8 w-8 text-purple-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-purple-800">Total Clauses</p>
-                <p className="text-3xl font-bold text-purple-900">{analysisData.totalClauses}</p>
-              </div>
-            </div>
-          </div>
+                  <div className="text-center">
+                    <div className="flex items-center justify-center mb-2">
+                      <CheckCircle className="h-6 w-6 text-green-600 mr-2" />
+                      <span className="text-sm font-medium text-green-800">Standard</span>
+                    </div>
+                    <p className="text-3xl font-bold text-green-900">{analysisData.standardClauses}</p>
+                    <p className="text-xs text-green-700 mt-1">
+                      {classifiedTotal > 0 ? Math.round((analysisData.standardClauses / classifiedTotal) * 100) : 0}%
+                    </p>
+                  </div>
 
-          <div className="bg-green-50 p-6 rounded-lg">
-            <div className="flex items-center">
-              <TrendingUp className="h-8 w-8 text-green-600" />
-              <div className="ml-4">
-                <p className="text-sm font-medium text-green-800">Compliance Score</p>
-                <p className="text-3xl font-bold text-green-900">{analysisData.complianceScore}%</p>
-              </div>
-            </div>
-          </div>
+                  <div className="text-center">
+                    <div className="flex items-center justify-center mb-2">
+                      <XCircle className="h-6 w-6 text-red-600 mr-2" />
+                      <span className="text-sm font-medium text-red-800">Non-Standard</span>
+                    </div>
+                    <p className="text-3xl font-bold text-red-900">{analysisData.nonStandardClauses}</p>
+                    <p className="text-xs text-red-700 mt-1">
+                      {classifiedTotal > 0 ? Math.round((analysisData.nonStandardClauses / classifiedTotal) * 100) : 0}%
+                    </p>
+                  </div>
 
-          <div className="bg-gray-50 p-6 rounded-lg">
-            <div className="flex items-center">
-              {getRiskIcon(analysisData.riskLevel)}
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-800">Risk Level</p>
-                <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium capitalize ${getRiskColor(analysisData.riskLevel)}`}>
-                  {analysisData.riskLevel}
-                </span>
-              </div>
-            </div>
+                  <div className="text-center">
+                    <div className="flex items-center justify-center mb-2">
+                      <AlertTriangle className="h-6 w-6 text-yellow-600 mr-2" />
+                      <span className="text-sm font-medium text-yellow-800">Ambiguous</span>
+                    </div>
+                    <p className="text-3xl font-bold text-yellow-900">{analysisData.ambiguousClauses}</p>
+                    <p className="text-xs text-yellow-700 mt-1">
+                      {classifiedTotal > 0 ? Math.round((analysisData.ambiguousClauses / classifiedTotal) * 100) : 0}%
+                    </p>
+                  </div>
+                </>
+              );
+            })()}
           </div>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-          <div className="bg-green-50 p-6 rounded-lg">
-            <div className="flex items-center mb-4">
-              <CheckCircle className="h-6 w-6 text-green-600 mr-2" />
-              <h3 className="text-lg font-semibold text-green-800">Standard Clauses</h3>
-            </div>
-            <p className="text-4xl font-bold text-green-900 mb-2">{analysisData.standardClauses}</p>
-            <p className="text-sm text-green-700">
-              {analysisData.totalClauses > 0 ? Math.round((analysisData.standardClauses / analysisData.totalClauses) * 100) : 0}% of total clauses
-            </p>
-          </div>
-
-          <div className="bg-red-50 p-6 rounded-lg">
-            <div className="flex items-center mb-4">
-              <XCircle className="h-6 w-6 text-red-600 mr-2" />
-              <h3 className="text-lg font-semibold text-red-800">Non-Standard Clauses</h3>
-            </div>
-            <p className="text-4xl font-bold text-red-900 mb-2">{analysisData.nonStandardClauses}</p>
-            <p className="text-sm text-red-700">
-              {analysisData.totalClauses > 0 ? Math.round((analysisData.nonStandardClauses / analysisData.totalClauses) * 100) : 0}% of total clauses
-            </p>
-          </div>
-
-          <div className="bg-yellow-50 p-6 rounded-lg">
-            <div className="flex items-center mb-4">
-              <AlertTriangle className="h-6 w-6 text-yellow-600 mr-2" />
-              <h3 className="text-lg font-semibold text-yellow-800">Ambiguous Clauses</h3>
-            </div>
-            <p className="text-4xl font-bold text-yellow-900 mb-2">{analysisData.ambiguousClauses}</p>
-            <p className="text-sm text-yellow-700">
-              {analysisData.totalClauses > 0 ? Math.round((analysisData.ambiguousClauses / analysisData.totalClauses) * 100) : 0}% of total clauses
-            </p>
-          </div>
+       
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

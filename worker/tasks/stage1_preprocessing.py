@@ -2,15 +2,23 @@ import sys
 import os
 from pathlib import Path
 
-backend_path = Path(__file__).parent.parent.parent / "backend"
-sys.path.insert(0, str(backend_path))
-
-os.environ['DATABASE_URL'] = f"sqlite:///{backend_path}/contracts.db"
+# Set up paths for Docker container or local development
+if os.path.exists('/app'):
+    sys.path.insert(0, "/app")
+    if 'DATABASE_URL' not in os.environ:
+        os.environ['DATABASE_URL'] = "sqlite:////app/data/contracts.db"
+    UPLOAD_BASE_PATH = Path("/app/upload")
+else:
+    backend_path = Path(__file__).parent.parent.parent / "backend"
+    sys.path.insert(0, str(backend_path))
+    if 'DATABASE_URL' not in os.environ:
+        os.environ['DATABASE_URL'] = f"sqlite:///{backend_path}/app/data/contracts.db"
+    UPLOAD_BASE_PATH = Path(__file__).parent.parent.parent / "upload"
 
 from datetime import datetime
 import logging
 
-from app.core.database import get_db
+from app.core.database import get_db, init_db
 from app.models.contract import Contract, FileRecord, ProcessingLog
 
 from preprocessing.pdf_extractor import PDFExtractor
@@ -25,6 +33,8 @@ logger = logging.getLogger(__name__)
 def preprocess_contract(self, contract_id: str):
     """Extract text from contract PDF - Phase 2 preprocessing"""
     try:
+        init_db()
+        
         db = next(get_db())
         
         contract = db.query(Contract).filter(Contract.id == contract_id).first()
@@ -59,8 +69,7 @@ def preprocess_contract(self, contract_id: str):
         db.commit()
         self.update_state(state='PROGRESS', meta={'progress': 20, 'message': 'Stage 1: Loading PDF file for preprocessing'})
         
-        base_path = Path(__file__).parent.parent.parent / "upload"
-        file_path = base_path / contract.storage_bucket / contract.storage_object_key
+        file_path = UPLOAD_BASE_PATH / contract.storage_bucket / contract.storage_object_key
         
         with open(file_path, 'rb') as file:
             file_content = file.read()
@@ -149,8 +158,7 @@ def preprocess_contract(self, contract_id: str):
         
         # Save clause data as JSON file
         clauses_filename = f"{contract_id}_clauses.json"
-        base_path = Path(__file__).parent.parent.parent / "upload"
-        clauses_file_path = base_path / contract.storage_bucket / clauses_filename
+        clauses_file_path = UPLOAD_BASE_PATH / contract.storage_bucket / clauses_filename
         clauses_file_path.parent.mkdir(parents=True, exist_ok=True)
         
         import json

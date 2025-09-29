@@ -10,11 +10,11 @@ class Settings(BaseSettings):
     debug: bool = False
     log_level: str = "INFO"
     
-    database_url: str = "sqlite:///./contracts.db"
+    database_url: str = os.getenv("DATABASE_URL", "sqlite:///./data/contracts.db")
     
-    redis_url: str = "redis://localhost:6379"
-    celery_broker_url: str = "redis://localhost:6379/0"
-    celery_result_backend: str = "redis://localhost:6379/0"
+    redis_url: str = os.getenv("REDIS_URL", "redis://localhost:6379")
+    celery_broker_url: str = os.getenv("CELERY_BROKER_URL", "redis://localhost:6379/0")
+    celery_result_backend: str = os.getenv("CELERY_RESULT_BACKEND", "redis://localhost:6379/0")
     
     allowed_origins: list = ["*"]
     allowed_hosts: list = ["localhost", "127.0.0.1", "backend", "*"]

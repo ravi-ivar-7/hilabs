@@ -6,7 +6,7 @@
 - **Name:** Ravi Kumar
 - **GitHub:** [@ravi-ivar-7](https://github.com/ravi-ivar-7)
 - **Institution:** IIT Kharagpur
-- **Team:** Individual Submission
+- **Team:** retrostoat
 
 ## Development Environment
 - **OS**: Linux 6.14.0-29-generic #29~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC x86_64
@@ -32,11 +32,30 @@
    cd hilabs
    ```
 
-2. **Run the automated setup:**
-   ```bash
-   chmod +x setup.sh
-   ./setup.sh
-   ```
+2. **Choose your setup method:**
 
-3. **Access the application:**
-   - **Frontend**: http://localhost:3000
+#### Option A: Docker Setup (Recommended)
+```bash
+docker-compose up --build
+```
+
+**Access the application:**
+- **Frontend**: http://localhost:3000
+- **Backend API**: http://localhost:8000
+- **API Documentation**: http://localhost:8000/docs
+
+**Note**: Docker may take some time to build and start all services (backend, frontend, worker, Redis). Please be patient during the initial setup. 😊
+
+#### Option B: Local Development Setup
+```bash
+# Copy environment configuration
+cp .env.example .env
+
+# Start all services locally
+./start-services.sh
+```
+
+**Access the application:**
+- **Frontend**: http://localhost:3000
+- **Backend API**: http://localhost:8000
+- **Redis**: localhost:6379

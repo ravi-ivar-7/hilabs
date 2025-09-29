@@ -28,6 +28,9 @@ echo "📁 Creating upload directories..."
 mkdir -p ../upload/contracts-tn ../upload/contracts-wa
 
 echo "🗄️  Setting up database..."
+mkdir -p app/data
+chmod 755 app/data
+export DATABASE_URL="sqlite:///./app/data/contracts.db"
 python -c "from app.core.database import engine; from app.models.base import BaseModel; BaseModel.metadata.create_all(bind=engine); print('Database tables created')"
 
 echo "✅ Backend setup complete!"

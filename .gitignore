@@ -1,8 +1,5 @@
-docs
 .windsurf
 .env
-worker/phases
-hackathon
 notebooks/outputs
 
 # Virtual environments

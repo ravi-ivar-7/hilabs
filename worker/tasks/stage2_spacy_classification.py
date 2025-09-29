@@ -12,12 +12,21 @@ from pathlib import Path
 from typing import Dict, Any, List
 from dataclasses import dataclass, asdict
 
-# Add backend to path for imports
-backend_path = os.path.join(os.path.dirname(__file__), '../../backend')
-sys.path.insert(0, backend_path)
+# Set up paths for Docker container or local development
+if os.path.exists('/app'):
+    sys.path.insert(0, "/app")
+    if 'DATABASE_URL' not in os.environ:
+        os.environ['DATABASE_URL'] = "sqlite:////app/data/contracts.db"
+    UPLOAD_BASE_PATH = Path("/app/upload")
+else:
+    backend_path = Path(__file__).parent.parent.parent / "backend"
+    sys.path.insert(0, str(backend_path))
+    if 'DATABASE_URL' not in os.environ:
+        os.environ['DATABASE_URL'] = f"sqlite:///{backend_path}/app/data/contracts.db"
+    UPLOAD_BASE_PATH = Path(__file__).parent.parent.parent / "upload"
 
 from celery_app import celery_app
-from app.core.database import get_db
+from app.core.database import get_db, init_db
 from app.models.contract import Contract, ContractClause, ProcessingLog, FileRecord
 from templates.template_loader import TemplateLoader, TemplateClause
 from classification.spacy_classifier import SpacyClassifier
@@ -46,6 +55,9 @@ def classify_contract(self, contract_id: str):
         contract_id: UUID of the contract to classify
     """
     try:
+        # Ensure database tables exist
+        init_db()
+        
         db = next(get_db())
         
         contract = db.query(Contract).filter(Contract.id == contract_id).first()
@@ -80,9 +92,8 @@ def classify_contract(self, contract_id: str):
         db.commit()
         self.update_state(state='PROGRESS', meta={'progress': 20, 'message': 'Stage 2: Loading extracted clauses'})
         
-        base_path = Path(__file__).parent.parent.parent / "upload"
         clauses_filename = f"{contract_id}_clauses.json"
-        clauses_file_path = base_path / contract.storage_bucket / clauses_filename
+        clauses_file_path = UPLOAD_BASE_PATH / contract.storage_bucket / clauses_filename
         
         if not clauses_file_path.exists():
             raise Exception(f"Clause data file not found: {clauses_file_path}")
@@ -175,7 +186,7 @@ def classify_contract(self, contract_id: str):
             db.add(clause_record)
         
         results_filename = f"{contract_id}_classification_results.json"
-        results_file_path = base_path / contract.storage_bucket / results_filename
+        results_file_path = UPLOAD_BASE_PATH / contract.storage_bucket / results_filename
         
         results_data = {
             "contract_id": contract_id,

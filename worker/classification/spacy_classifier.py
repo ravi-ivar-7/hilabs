@@ -49,8 +49,9 @@ class SpacyClassifier:
         self.templates = templates
         self.target_attributes = target_attributes
         
-        self.fuzzy_threshold = 85
-        self.sbert_threshold = 0.75
+        # Classification thresholds, change these based on requirements
+        self.fuzzy_threshold = 70
+        self.sbert_threshold = 0.65
         self.sbert_ambig_low = 0.60
         self.sbert_ambig_high = 0.75
         
@@ -64,6 +65,8 @@ class SpacyClassifier:
         # Initialize SBERT model
         try:
             self.sbert_model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
+            # Disable progress bars for cleaner logs
+            self.sbert_model.encode("test", show_progress_bar=False)
             logger.info("SBERT model loaded successfully")
         except Exception as e:
             logger.warning(f"Failed to load SBERT model: {e}")
@@ -310,7 +313,7 @@ class SpacyClassifier:
     def _compute_sbert_similarity(self, text1: str, text2: str) -> float:
         """Compute semantic similarity using SBERT."""
         try:
-            embeddings = self.sbert_model.encode([text1, text2])
+            embeddings = self.sbert_model.encode([text1, text2], show_progress_bar=False)
             # Compute cosine similarity
             import numpy as np
             similarity = np.dot(embeddings[0], embeddings[1]) / (

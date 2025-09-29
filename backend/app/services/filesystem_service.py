@@ -1,6 +1,7 @@
 import os
 import shutil
 from pathlib import Path
+import os
 from typing import Optional
 import logging
 from ..core.config import get_settings
@@ -11,7 +12,13 @@ logger = logging.getLogger(__name__)
 class FileSystemService:
     def __init__(self):
         settings = get_settings()
-        self.base_path = Path(__file__).parent.parent.parent.parent / "upload"
+        # Dynamic path for Docker vs local development
+        if os.path.exists('/app'):
+            # Docker environment
+            self.base_path = Path("/app/upload")
+        else:
+            # Local development
+            self.base_path = Path(__file__).parent.parent.parent.parent / "upload"
         self.upload_dir = self.base_path
         self.base_path.mkdir(exist_ok=True)
         

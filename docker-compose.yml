@@ -1,11 +1,7 @@
-version: '3.8'
-
 services:
   # Redis for Celery background tasks
   redis:
-    build:
-      context: ./infra/redis
-      dockerfile: Dockerfile
+    image: redis:7-alpine
     container_name: hilabs-redis
     ports:
       - "6379:6379"
@@ -13,11 +9,12 @@ services:
       - redis_data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
+      interval: 5s
+      timeout: 3s
+      retries: 5
     networks:
       - hilabs-network
+    restart: unless-stopped
 
 
   frontend:
@@ -42,19 +39,42 @@ services:
       - "8000:8000"
     environment:
       - ENVIRONMENT=production
-      - MAX_WORKERS=2
-      - REDIS_URL=redis://redis:6379/0
+      - DATABASE_URL=sqlite:////app/data/contracts.db
+      - REDIS_URL=redis://redis:6379
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
     volumes:
-      - ./backend/app/data:/app/data
-      - ./backend/app/models:/app/models
-      - ./upload:/app/upload
+      - backend_data:/app/data
+      - worker_uploads:/app/upload
     depends_on:
-      - redis
+      redis:
+        condition: service_healthy
     networks:
       - hilabs-network
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: .
+      dockerfile: worker/Dockerfile
+    environment:
+      - DATABASE_URL=sqlite:////app/data/contracts.db
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    volumes:
+      - backend_data:/app/data
+      - worker_uploads:/app/upload
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - hilabs-network
+    restart: unless-stopped
 
 volumes:
   redis_data:
+  worker_uploads:
+  backend_data:
 
 networks:
   hilabs-network:

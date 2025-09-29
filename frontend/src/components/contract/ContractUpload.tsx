@@ -5,6 +5,7 @@ import { useDropzone } from 'react-dropzone';
 import { Upload, FileText, X, AlertCircle } from 'lucide-react';
 import { ContractFile } from '../../types/contract';
 import { validateFileType, validateFileSize, formatFileSize } from '../../lib/utils';
+import { detectStateFromFilename, validateFilesForState } from '../../lib/stateDetection';
 import LoadingSpinner from '../common/LoadingSpinner';
 
 interface ContractUploadProps {
@@ -24,19 +25,17 @@ export default function ContractUpload({
   uploadProgress,
   error,
 }: ContractUploadProps) {
-  const [selectedState, setSelectedState] = useState<'TN' | 'WA' | null>(null);
   const [dragError, setDragError] = useState<string | null>(null);
 
   const onDrop = useCallback(
     async (acceptedFiles: File[]) => {
       setDragError(null);
       
-      if (!selectedState) {
-        setDragError('Please select a state (TN or WA) before uploading');
-        return;
-      }
+      // Validate files for state detection
+      const validationResults = validateFilesForState(acceptedFiles);
       
-      for (const file of acceptedFiles) {
+      for (const { file, result } of validationResults) {
+        // Check file type and size first
         if (!validateFileType(file)) {
           setDragError('Only PDF files are allowed');
           return;
@@ -47,10 +46,16 @@ export default function ContractUpload({
           return;
         }
 
-        await onUpload(file, selectedState);
+        // Check if state could be detected
+        if (!result.state) {
+          setDragError(result.error || 'Could not detect state from filename');
+          return;
+        }
+
+        await onUpload(file, result.state);
       }
     },
-    [onUpload, selectedState]
+    [onUpload]
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -64,43 +69,20 @@ export default function ContractUpload({
 
   return (
     <div className="space-y-6">
-      {/* State Selection */}
-      <div className="bg-gray-50 p-4 rounded-lg">
-        <h3 className="text-sm font-medium text-gray-900 mb-3">Select Contract State (Required)</h3>
-        <div className="flex justify-center space-x-6">
-          <label className="flex items-center">
-            <input
-              type="radio"
-              value="TN"
-              checked={selectedState === 'TN'}
-              onChange={(e) => setSelectedState(e.target.value as 'TN' | 'WA')}
-              className="mr-2 h-4 w-4 text-blue-600"
-            />
-            <span className="text-sm font-medium">Tennessee (TN)</span>
-          </label>
-          <label className="flex items-center">
-            <input
-              type="radio"
-              value="WA"
-              checked={selectedState === 'WA'}
-              onChange={(e) => setSelectedState(e.target.value as 'TN' | 'WA')}
-              className="mr-2 h-4 w-4 text-blue-600"
-            />
-            <span className="text-sm font-medium">Washington (WA)</span>
-          </label>
-        </div>
-        {!selectedState && (
-          <p className="text-xs text-red-600 mt-2 text-center">⚠️ Please select a state before uploading files</p>
-        )}
+      {/* Information Banner */}
+      <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+        <h3 className="text-sm font-medium text-blue-900 mb-2">Automatic State Detection</h3>
+        <p className="text-sm text-blue-700">
+          Contract state (TN/WA) will be automatically detected from your filename. 
+          Please ensure your files contain "TN" or "WA" in the name (e.g., "contract_TN.pdf", "WA_agreement.pdf").
+        </p>
       </div>
 
       {/* Upload Zone */}
       <div
         {...getRootProps()}
         className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
-          !selectedState
-            ? 'border-gray-200 bg-gray-100 cursor-not-allowed opacity-50'
-            : isDragActive
+          isDragActive
             ? 'border-blue-400 bg-blue-50 cursor-pointer'
             : 'border-gray-300 hover:border-gray-400 cursor-pointer'
         }`}
@@ -115,7 +97,7 @@ export default function ContractUpload({
               Drag & drop PDF contracts here, or click to select files
             </p>
             <p className="text-sm text-gray-500">
-              Maximum file size: 10MB | State: {selectedState}
+              Maximum file size: 10MB | State detected from filename
             </p>
           </div>
         )}
