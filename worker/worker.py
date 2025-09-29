@@ -7,7 +7,7 @@ Celery worker for HiLabs contract processing
 from celery_app import celery_app
 
 # Import task modules to register them
-from tasks import stage1_preprocessing, stage2_classification
+from tasks import stage1_preprocessing, stage2_spacy_classification
 
 if __name__ == '__main__':
     celery_app.start()

@@ -24,6 +24,27 @@ pip install --upgrade pip
 echo "📚 Installing dependencies..."
 pip install -r requirements.txt
 
+echo "🤖 Checking spaCy model..."
+if ! python3 -c "import spacy; spacy.load('en_core_web_sm')" > /dev/null 2>&1; then
+    echo "📥 Downloading spaCy English model..."
+    python3 -m spacy download en_core_web_sm
+else
+    echo "✅ spaCy English model already installed"
+fi
+
+echo "🔍 Testing task imports..."
+if python3 -c "
+import sys
+sys.path.insert(0, '.')
+from tasks.stage2_spacy_classification import classify_contract
+from tasks.stage1_preprocessing import preprocess_contract
+print('✅ All task modules imported successfully')
+" > /dev/null 2>&1; then
+    echo "✅ Task imports verified"
+else
+    echo "⚠️  Warning: Some task imports failed - worker may have issues"
+fi
+
 echo "✅ Worker environment setup complete!"
 
 start_worker() {
@@ -33,7 +54,6 @@ start_worker() {
     echo "🔗 Broker: redis://localhost:6379/0"
     echo ""
     
-    # Start the worker with proper configuration
     celery -A worker worker \
         --loglevel=info \
         --concurrency=2 \

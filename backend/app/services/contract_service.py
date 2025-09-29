@@ -121,9 +121,15 @@ class ContractService:
                     "error": "Contract not found"
                 }
             
-            # Delete all associated files via FileRecord relationships
+            # Delete all associated files via FileRecord relationships or not tracked ones
             for file_record in contract.file_records:
                 self.filesystem_service.delete_file(file_record.storage_bucket, file_record.storage_object_key)
+            
+            bucket_name = contract.storage_bucket
+            contract_id = str(contract.id)
+            
+            clauses_file = f"{contract_id}_clauses.json"
+            self.filesystem_service.delete_file(bucket_name, clauses_file)
             
             db.delete(contract)
             db.commit()
@@ -285,6 +291,7 @@ class ContractService:
                 "total_clauses": contract.total_clauses or 0,
                 "standard_clauses": contract.standard_clauses or 0,
                 "non_standard_clauses": contract.non_standard_clauses or 0,
+                "ambiguous_clauses": contract.ambiguous_clauses or 0,
                 "processing_time": None
             }
             

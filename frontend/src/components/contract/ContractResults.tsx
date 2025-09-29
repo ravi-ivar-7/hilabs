@@ -16,7 +16,6 @@ export default function ContractResults({ contractId, onGetResults }: ContractRe
   const [error, setError] = useState<string | null>(null);
   const [expandedClauses, setExpandedClauses] = useState<Set<string>>(new Set());
   const [expandedClauseTexts, setExpandedClauseTexts] = useState<Set<string>>(new Set());
-  const [expandedTemplateTexts, setExpandedTemplateTexts] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const fetchResults = async () => {
@@ -25,6 +24,10 @@ export default function ContractResults({ contractId, onGetResults }: ContractRe
         setError(null);
         const data = await onGetResults(contractId);
         setResults(data);
+        
+        if (data?.clauses && data.clauses.length > 0) {
+          setExpandedClauses(new Set([data.clauses[0].id]));
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load results');
       } finally {
@@ -80,6 +83,8 @@ export default function ContractResults({ contractId, onGetResults }: ContractRe
         return <CheckCircle className="h-5 w-5 text-green-500" />;
       case 'non-standard':
         return <XCircle className="h-5 w-5 text-red-500" />;
+      case 'ambiguous':
+        return <AlertTriangle className="h-5 w-5 text-yellow-500" />;
       default:
         return <Clock className="h-5 w-5 text-gray-400" />;
     }
@@ -91,6 +96,8 @@ export default function ContractResults({ contractId, onGetResults }: ContractRe
         return 'text-green-700 bg-green-100';
       case 'non-standard':
         return 'text-red-700 bg-red-100';
+      case 'ambiguous':
+        return 'text-yellow-700 bg-yellow-100';
       default:
         return 'text-gray-700 bg-gray-100';
     }
@@ -120,17 +127,6 @@ export default function ContractResults({ contractId, onGetResults }: ContractRe
     });
   };
 
-  const toggleTemplateText = (clauseId: string) => {
-    setExpandedTemplateTexts(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(clauseId)) {
-        newSet.delete(clauseId);
-      } else {
-        newSet.add(clauseId);
-      }
-      return newSet;
-    });
-  };
 
   const truncateText = (text: string, maxLength: number = 150) => {
     if (text.length <= maxLength) return text;
@@ -146,7 +142,7 @@ export default function ContractResults({ contractId, onGetResults }: ContractRe
           <h2 className="text-xl font-semibold text-gray-900">Contract Analysis Results</h2>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <div className="bg-blue-50 p-4 rounded-lg">
             <h3 className="text-sm font-medium text-blue-800">Total Clauses</h3>
             <p className="text-2xl font-bold text-blue-900">{summary.total_clauses}</p>
@@ -158,6 +154,10 @@ export default function ContractResults({ contractId, onGetResults }: ContractRe
           <div className="bg-red-50 p-4 rounded-lg">
             <h3 className="text-sm font-medium text-red-800">Non-Standard Clauses</h3>
             <p className="text-2xl font-bold text-red-900">{summary.non_standard_clauses}</p>
+          </div>
+          <div className="bg-yellow-50 p-4 rounded-lg">
+            <h3 className="text-sm font-medium text-yellow-800">Ambiguous Clauses</h3>
+            <p className="text-2xl font-bold text-yellow-900">{summary.ambiguous_clauses}</p>
           </div>
         </div>
 
@@ -251,40 +251,52 @@ export default function ContractResults({ contractId, onGetResults }: ContractRe
 
                       {clause.template_match_text && (
                         <div className="text-sm text-gray-700 mb-3">
-                          <div 
-                            className="flex items-center justify-between cursor-pointer hover:bg-gray-50 p-2 rounded"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toggleTemplateText(clause.id);
-                            }}
-                          >
-                            <p className="font-medium">
-                              {expandedTemplateTexts.has(clause.id) ? 'Template Match (Click to collapse)' : 'Template Match (Click to expand)'}
-                            </p>
-                            {expandedTemplateTexts.has(clause.id) ? (
-                              <ChevronDown className="h-4 w-4 text-gray-400" />
-                            ) : (
-                              <ChevronRight className="h-4 w-4 text-gray-400" />
-                            )}
-                          </div>
-                          {!expandedTemplateTexts.has(clause.id) && (
-                            <p 
-                              className="bg-blue-50 p-3 rounded border mt-2 text-gray-600 cursor-pointer hover:bg-blue-100"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                toggleTemplateText(clause.id);
-                              }}
-                            >
-                              {clause.template_match_text ? truncateText(clause.template_match_text) : 'No text found'}
-                            </p>
-                          )}
-                          {expandedTemplateTexts.has(clause.id) && (
-                            <p className="bg-blue-50 p-3 rounded border mt-2">
-                              {clause.template_match_text || 'No text found'}
-                            </p>
-                          )}
+                          <p className="font-medium mb-2">Template Match:</p>
+                          <p className="bg-blue-50 p-3 rounded border">
+                            {clause.template_match_text}
+                          </p>
                         </div>
                       )}
+
+                      {/* Classification Steps */}
+                      <div className="text-sm text-gray-700 mb-3">
+                        <p className="font-medium mb-2">Classification Steps:</p>
+                        {clause.classification_steps ? (
+                          <div className="bg-gray-50 p-3 rounded border">
+                            {(() => {
+                              try {
+                                const steps = JSON.parse(clause.classification_steps);
+                                return (
+                                  <div className="space-y-2">
+                                    {steps.map((step: any, index: number) => (
+                                      <div key={index} className="flex items-center justify-between text-xs">
+                                        <span className="font-medium">{step.step_name}</span>
+                                        <div className="flex items-center space-x-2">
+                                          <span className={`px-2 py-1 rounded ${step.passed ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                            {step.passed ? 'PASS' : 'FAIL'}
+                                          </span>
+                                          {step.score && <span className="text-gray-500">Score: {step.score}</span>}
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                );
+                              } catch (e) {
+                                return <span className="text-gray-500">Invalid classification steps data</span>;
+                              }
+                            })()}
+                          </div>
+                        ) : (
+                          <div className="bg-yellow-50 p-3 rounded border text-yellow-700">
+                            No classification steps available
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Extraction Method */}
+                      <div className="text-xs text-gray-500 mb-2">
+                        <span className="font-medium">Extraction Method:</span> {clause.extraction_method || 'spacy_nlp'}
+                      </div>
 
                       <div className="flex items-center justify-between text-xs text-gray-500">
                         {clause.similarity_score && (
@@ -292,6 +304,9 @@ export default function ContractResults({ contractId, onGetResults }: ContractRe
                         )}
                         {clause.match_type && (
                           <span>Match Type: {clause.match_type}</span>
+                        )}
+                        {clause.template_attribute && (
+                          <span>Template Attribute: {clause.template_attribute}</span>
                         )}
                       </div>
                     </div>

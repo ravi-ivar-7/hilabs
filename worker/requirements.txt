@@ -8,3 +8,21 @@ PyPDF2==3.0.1
 pdfplumber==0.10.3
 python-dotenv==1.0.1
 flower==2.0.1
+
+spacy>=3.4.0
+sentence-transformers>=2.2.0
+transformers>=4.20.0
+accelerate>=0.20.0
+faiss-cpu>=1.7.0
+rapidfuzz>=2.0.0
+word2number>=1.1
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch
+torchvision
+torchaudio
+numpy>=1.21.0
+scikit-learn>=1.1.0
+PyMuPDF>=1.20.0
+pandas>=1.5.0
+openpyxl>=3.0.0
+tqdm>=4.64.0

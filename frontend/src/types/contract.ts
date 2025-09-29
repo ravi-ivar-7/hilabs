@@ -36,6 +36,9 @@ export interface ClauseResponse {
   template_match_text?: string;
   similarity_score?: number;
   match_type?: string;
+  classification_steps?: string; // JSON string of classification steps
+  template_attribute?: string;
+  extraction_method?: string;
 }
 
 export interface ContractResultsResponse {
@@ -45,6 +48,7 @@ export interface ContractResultsResponse {
     total_clauses: number;
     standard_clauses: number;
     non_standard_clauses: number;
+    ambiguous_clauses: number;
     processing_time?: number;
     accuracy_score?: number;
   };

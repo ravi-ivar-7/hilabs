@@ -15,6 +15,7 @@ from app.models.contract import Contract, FileRecord, ProcessingLog
 
 from preprocessing.pdf_extractor import PDFExtractor
 from preprocessing.text_cleaner import TextCleaner
+from preprocessing.clause_extractor import ClauseExtractor
 
 from celery_app import celery_app
 
@@ -50,6 +51,7 @@ def preprocess_contract(self, contract_id: str):
         
         pdf_extractor = PDFExtractor()
         text_cleaner = TextCleaner()
+        clause_extractor = ClauseExtractor()
         
         # Step 1: Loading PDF (20% progress)
         contract.processing_message = "Stage 1: Loading PDF file for preprocessing"
@@ -102,37 +104,74 @@ def preprocess_contract(self, contract_id: str):
         cleaning_result = text_cleaner.clean_text(raw_text)
         cleaned_text = cleaning_result["cleaned_text"]
         
-        # Step 3: Saving preprocessed text (80% progress)
-        contract.processing_message = "Stage 1: Saving preprocessed text to filesystem"
-        contract.processing_progress = 80
+        # Step 3: Extracting clauses (70% progress)
+        contract.processing_message = "Stage 1: Extracting clauses from contract text"
+        contract.processing_progress = 70
         db.commit()
-        self.update_state(state='PROGRESS', meta={'progress': 80, 'message': 'Stage 1: Saving preprocessed text to filesystem'})
+        self.update_state(state='PROGRESS', meta={'progress': 70, 'message': 'Stage 1: Extracting clauses from contract text'})
         
-        # Store extracted text in contract record
-        contract.extracted_text = cleaned_text
-        extracted_filename = f"{contract_id}_extracted.txt"
-        text_file_record = FileRecord(
+        # Extract clauses from cleaned text
+        clause_extraction_result = clause_extractor.extract_clauses(cleaned_text)
+        clauses = clause_extraction_result.get('clauses', [])
+        
+        clause_log = ProcessingLog(
             contract_id=contract_id,
-            file_type="extracted_text",
-            filename=extracted_filename,
-            file_size=len(cleaned_text.encode('utf-8')),
-            mime_type="text/plain",
-            storage_bucket=contract.storage_bucket,
-            storage_object_key=extracted_filename,
-            extraction_method="pdf_extraction"
+            level="INFO",
+            message=f"Extracted {len(clauses)} clauses from contract text",
+            component="clause_extractor",
+            celery_task_id=self.request.id
         )
-        db.add(text_file_record)
+        db.add(clause_log)
+        db.commit()
         
-        # Save extracted text to filesystem
+        # Step 4: Saving clause data (90% progress)
+        contract.processing_message = "Stage 1: Saving clause extraction results"
+        contract.processing_progress = 90
+        db.commit()
+        self.update_state(state='PROGRESS', meta={'progress': 90, 'message': 'Stage 1: Saving clause extraction results'})
+        
+        # Store extracted text and clause count in contract record
+        contract.extracted_text = cleaned_text
+        
+        # Prepare clause data for JSON storage
+        clause_data = {
+            "contract_id": contract_id,
+            "file_name": contract.original_filename,
+            "extraction_metadata": {
+                "total_clauses": len(clauses),
+                "extraction_method": "sentence_splitting",
+                "text_length": len(cleaned_text),
+                "pages_processed": extraction_result.get('pages', 0),
+                "extraction_timestamp": datetime.utcnow().isoformat()
+            },
+            "clauses": clauses
+        }
+        
+        # Save clause data as JSON file
+        clauses_filename = f"{contract_id}_clauses.json"
         base_path = Path(__file__).parent.parent.parent / "upload"
-        text_file_path = base_path / contract.storage_bucket / extracted_filename
-        text_file_path.parent.mkdir(parents=True, exist_ok=True)
+        clauses_file_path = base_path / contract.storage_bucket / clauses_filename
+        clauses_file_path.parent.mkdir(parents=True, exist_ok=True)
         
-        with open(text_file_path, 'w', encoding='utf-8') as f:
-            f.write(cleaned_text)
+        import json
+        with open(clauses_file_path, 'w', encoding='utf-8') as f:
+            json.dump(clause_data, f, ensure_ascii=False, indent=2)
         
-        # Step 4: Storing results and queuing Stage 2 (100% progress)
-        contract.processing_message = "Stage 1: Text extraction completed, queuing classification"
+        # Create file record for clause data
+        clauses_file_record = FileRecord(
+            contract_id=contract_id,
+            file_type="clause_data",
+            filename=clauses_filename,
+            file_size=clauses_file_path.stat().st_size,
+            mime_type="application/json",
+            storage_bucket=contract.storage_bucket,
+            storage_object_key=clauses_filename,
+            extraction_method="clause_extraction"
+        )
+        db.add(clauses_file_record)
+        
+        # Step 5: Completing preprocessing (100% progress)
+        contract.processing_message = "Stage 1: Clause extraction completed, ready for classification"
         contract.processing_progress = 100
         contract.status = "preprocessing_completed"
         contract.processing_completed_at = datetime.utcnow()
@@ -140,7 +179,7 @@ def preprocess_contract(self, contract_id: str):
         completion_log = ProcessingLog(
             contract_id=contract_id,
             level="INFO",
-            message=f"Stage 1 completed successfully. Extracted {len(cleaned_text)} characters.",
+            message=f"Stage 1 completed successfully. Extracted {len(clauses)} clauses from {len(cleaned_text)} characters.",
             component="stage1_preprocessing",
             celery_task_id=self.request.id
         )
@@ -151,7 +190,7 @@ def preprocess_contract(self, contract_id: str):
         # Queue Stage 2: Classification
         try:
             classification_task = celery_app.send_task(
-                'tasks.stage2_classification.classify_contract',
+                'tasks.stage2_spacy_classification.classify_contract', # update as per the req classifier
                 args=[contract_id],
                 queue='contract_classification'
             )
@@ -177,7 +216,7 @@ def preprocess_contract(self, contract_id: str):
             "contract_id": contract_id,
             "status": "preprocessed",
             "extracted_text_length": len(cleaned_text),
-            "text_file_path": str(text_file_path),
+            "clauses_extracted": len(clauses),
             "pages_processed": extraction_result['pages']
         }
         

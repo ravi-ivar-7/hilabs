@@ -24,12 +24,17 @@ export default function ContractUpload({
   uploadProgress,
   error,
 }: ContractUploadProps) {
-  const [selectedState, setSelectedState] = useState<'TN' | 'WA'>('TN');
+  const [selectedState, setSelectedState] = useState<'TN' | 'WA' | null>(null);
   const [dragError, setDragError] = useState<string | null>(null);
 
   const onDrop = useCallback(
     async (acceptedFiles: File[]) => {
       setDragError(null);
+      
+      if (!selectedState) {
+        setDragError('Please select a state (TN or WA) before uploading');
+        return;
+      }
       
       for (const file of acceptedFiles) {
         if (!validateFileType(file)) {
@@ -60,36 +65,44 @@ export default function ContractUpload({
   return (
     <div className="space-y-6">
       {/* State Selection */}
-      <div className="flex justify-center space-x-4">
-        <label className="flex items-center">
-          <input
-            type="radio"
-            value="TN"
-            checked={selectedState === 'TN'}
-            onChange={(e) => setSelectedState(e.target.value as 'TN' | 'WA')}
-            className="mr-2"
-          />
-          <span className="text-sm font-medium">Tennessee (TN)</span>
-        </label>
-        <label className="flex items-center">
-          <input
-            type="radio"
-            value="WA"
-            checked={selectedState === 'WA'}
-            onChange={(e) => setSelectedState(e.target.value as 'TN' | 'WA')}
-            className="mr-2"
-          />
-          <span className="text-sm font-medium">Washington (WA)</span>
-        </label>
+      <div className="bg-gray-50 p-4 rounded-lg">
+        <h3 className="text-sm font-medium text-gray-900 mb-3">Select Contract State (Required)</h3>
+        <div className="flex justify-center space-x-6">
+          <label className="flex items-center">
+            <input
+              type="radio"
+              value="TN"
+              checked={selectedState === 'TN'}
+              onChange={(e) => setSelectedState(e.target.value as 'TN' | 'WA')}
+              className="mr-2 h-4 w-4 text-blue-600"
+            />
+            <span className="text-sm font-medium">Tennessee (TN)</span>
+          </label>
+          <label className="flex items-center">
+            <input
+              type="radio"
+              value="WA"
+              checked={selectedState === 'WA'}
+              onChange={(e) => setSelectedState(e.target.value as 'TN' | 'WA')}
+              className="mr-2 h-4 w-4 text-blue-600"
+            />
+            <span className="text-sm font-medium">Washington (WA)</span>
+          </label>
+        </div>
+        {!selectedState && (
+          <p className="text-xs text-red-600 mt-2 text-center">⚠️ Please select a state before uploading files</p>
+        )}
       </div>
 
       {/* Upload Zone */}
       <div
         {...getRootProps()}
-        className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
-          isDragActive
-            ? 'border-blue-400 bg-blue-50'
-            : 'border-gray-300 hover:border-gray-400'
+        className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+          !selectedState
+            ? 'border-gray-200 bg-gray-100 cursor-not-allowed opacity-50'
+            : isDragActive
+            ? 'border-blue-400 bg-blue-50 cursor-pointer'
+            : 'border-gray-300 hover:border-gray-400 cursor-pointer'
         }`}
       >
         <input {...getInputProps()} />

@@ -33,6 +33,7 @@ class Contract(BaseModel):
     total_clauses = Column(Integer, nullable=True)
     standard_clauses = Column(Integer, nullable=True)
     non_standard_clauses = Column(Integer, nullable=True)
+    ambiguous_clauses = Column(Integer, nullable=True)
     
     error_message = Column(Text, nullable=True)
 
@@ -70,15 +71,19 @@ class ContractClause(BaseModel):
     attribute_name = Column(String(100), nullable=False)
     clause_text = Column(Text, nullable=False)
     
-    classification = Column(String(20), nullable=True)  # standard, non_standard
+    classification = Column(String(20), nullable=True)  # Standard, Non-Standard, Ambiguous
     confidence_score = Column(Integer, nullable=True)  # 0-100
     
     template_match_text = Column(Text, nullable=True)
     similarity_score = Column(Integer, nullable=True)  # 0-100
-    match_type = Column(String(50), nullable=True)  # exact, value_substitution, minor_wording, etc.
+    match_type = Column(String(50), nullable=True)  # exact, lexical_high, semantic_high, etc.
     
     extraction_method = Column(String(50), nullable=True)
     processing_notes = Column(Text, nullable=True)
+    
+    # Additional spaCy classifier fields
+    classification_steps = Column(Text, nullable=True)  # JSON of classification steps
+    template_attribute = Column(String(100), nullable=True)  # Which template attribute was matched
     
     contract = relationship("Contract", back_populates="clauses")
 

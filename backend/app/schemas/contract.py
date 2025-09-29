@@ -65,6 +65,9 @@ class ClauseResponse(BaseModel):
     template_match_text: Optional[str] = None
     similarity_score: Optional[int] = None
     match_type: Optional[str] = None
+    extraction_method: Optional[str] = None
+    classification_steps: Optional[str] = None
+    template_attribute: Optional[str] = None
 
     class Config:
         from_attributes = True

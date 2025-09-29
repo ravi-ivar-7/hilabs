@@ -1,8 +1,10 @@
 docs
 .windsurf
 .env
-backend/phases
+worker/phases
 hackathon
+notebooks
+
 
 # Upload directories - contract files (ignore files but keep folders)
 upload/contracts-tn/*
