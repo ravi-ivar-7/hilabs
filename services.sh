@@ -85,6 +85,9 @@ start_frontend() {
         echo -e "${YELLOW}Frontend already running${NC}"
     else
         cd frontend
+        echo -e "${BLUE}Installing frontend dependencies...${NC}"
+        npm install
+        echo -e "${BLUE}Starting development server...${NC}"
         npm run dev &
         cd ..
         sleep 5

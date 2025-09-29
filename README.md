@@ -40,19 +40,7 @@
 
 2. **Choose your setup method:**
 
-#### Option A: Docker Setup (Recommended)
-```bash
-docker-compose up --build
-```
-
-**Access the application:**
-- **Frontend**: http://localhost:3000
-- **Backend API**: http://localhost:8000
-- **API Documentation**: http://localhost:8000/docs
-
-**Note**: Docker may take some time to build and start all services (backend, frontend, worker, Redis). Please be patient during the initial setup. 😊
-
-#### Option B: Local Development Setup
+#### Option A: Local Development Setup (Recommended)
 ```bash
 # Copy environment configuration
 cp .env.example .env
@@ -63,6 +51,20 @@ cp .env.example .env
 
 **Access the application:**
 - **Frontend**: http://localhost:3000
+- **Backend API**: http://localhost:8000
+- **API Documentation**: http://localhost:8000/docs
+
+#### Option B: Docker Setup
+```bash
+docker-compose up --build
+```
+
+**Access the application:**
+- **Frontend**: http://localhost:3000
+- **Backend API**: http://localhost:8000
+- **API Documentation**: http://localhost:8000/docs
+
+**Note**: Docker may take some time to build and start all services (backend, frontend, worker, Redis). Please be patient during the initial setup. 😊
 - **Backend API**: http://localhost:8000
 - **Redis**: localhost:6379
 
