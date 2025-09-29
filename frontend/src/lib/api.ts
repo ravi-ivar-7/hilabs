@@ -1,5 +1,6 @@
 import { APIResponse, UploadProgress } from '../types/api';
-import { ContractFile, ContractAnalysis } from '../types/contract';
+import { ContractAnalysis, ContractResultsResponse } from '../types/contract';
+import { ReviewFeedback } from '../types/review';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -113,6 +114,49 @@ export class APIClient {
         message: 'Health check failed',
         error: error instanceof Error ? error.message : 'Unknown error',
       };
+    }
+  }
+
+  async submitClauseFeedback(feedback: ReviewFeedback): Promise<APIResponse<any>> {
+    try {
+      const response = await fetch(`${this.baseURL}/api/v1/contracts/clauses/feedback`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(feedback),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error submitting clause feedback:', error);
+      throw error;
+    }
+  }
+
+  async getContractFeedback(contractId: string): Promise<APIResponse<Record<string, ReviewFeedback>>> {
+    try {
+      const response = await fetch(`${this.baseURL}/api/v1/contracts/${contractId}/feedback`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error fetching contract feedback:', error);
+      throw error;
     }
   }
 }

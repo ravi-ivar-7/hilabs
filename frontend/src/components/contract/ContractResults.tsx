@@ -1,8 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { FileText, CheckCircle, XCircle, AlertTriangle, Clock, ChevronDown, ChevronRight } from 'lucide-react';
-import { ContractResultsResponse, ClauseResponse } from '../../types/contract';
+import { AlertTriangle, CheckCircle, XCircle, Eye, MessageSquare, Clock, FileText, ChevronDown, ChevronRight, Edit3 } from 'lucide-react';
+import { ContractAnalysis, ClauseResponse } from '../../types/contract';
+import ReviewModal from './ReviewModal';
+import { ReviewFeedback } from '../../types/review';
+import { apiClient } from '../../lib/api';
+import { ContractResultsResponse } from '../../types/contract';
 import LoadingSpinner from '../common/LoadingSpinner';
 
 interface ContractResultsProps {
@@ -16,6 +20,9 @@ export default function ContractResults({ contractId, onGetResults }: ContractRe
   const [error, setError] = useState<string | null>(null);
   const [expandedClauses, setExpandedClauses] = useState<Set<string>>(new Set());
   const [expandedClauseTexts, setExpandedClauseTexts] = useState<Set<string>>(new Set());
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [selectedClauseForReview, setSelectedClauseForReview] = useState<ClauseResponse | null>(null);
+  const [submittedFeedback, setSubmittedFeedback] = useState<Map<string, ReviewFeedback>>(new Map());
 
   useEffect(() => {
     const fetchResults = async () => {
@@ -27,6 +34,20 @@ export default function ContractResults({ contractId, onGetResults }: ContractRe
         
         if (data?.clauses && data.clauses.length > 0) {
           setExpandedClauses(new Set([data.clauses[0].id]));
+        }
+
+        try {
+          const feedbackResponse = await apiClient.getContractFeedback(contractId);
+          if (feedbackResponse.success && feedbackResponse.data) {
+            const feedbackMap = new Map<string, ReviewFeedback>();
+            Object.entries(feedbackResponse.data).forEach(([clauseId, feedback]) => {
+              feedbackMap.set(clauseId, feedback);
+            });
+            setSubmittedFeedback(feedbackMap);
+          }
+        } catch (feedbackError) {
+          console.warn('Failed to load existing feedback:', feedbackError);
+          // Don't fail the entire component if feedback loading fails
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load results');
@@ -133,6 +154,45 @@ export default function ContractResults({ contractId, onGetResults }: ContractRe
     return text.substring(0, maxLength) + '...';
   };
 
+  const handleReviewClick = (clause: ClauseResponse) => {
+    setSelectedClauseForReview(clause);
+    setReviewModalOpen(true);
+  };
+
+  const handleSubmitFeedback = async (feedback: ReviewFeedback) => {
+    try {
+      const result = await apiClient.submitClauseFeedback(feedback);
+      
+      if (!result.success) {
+        throw new Error(result.message || 'Failed to submit feedback');
+      }
+
+      // Store the feedback for this clause
+      setSubmittedFeedback(prev => new Map(prev.set(feedback.clause_id, feedback)));
+      
+      setReviewModalOpen(false);
+      setSelectedClauseForReview(null);
+       
+      const toast = document.createElement('div');
+      toast.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center space-x-2';
+      toast.innerHTML = `
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+        </svg>
+        <span>Feedback submitted successfully!</span>
+      `;
+      document.body.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.remove();
+      }, 3000);
+      
+    } catch (error) {
+      console.error('Error submitting feedback:', error);
+      alert('Failed to submit feedback: ' + (error instanceof Error ? error.message : 'Unknown error'));
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Contract Summary */}
@@ -203,12 +263,33 @@ export default function ContractResults({ contractId, onGetResults }: ContractRe
                             {clause.classification}
                           </span>
                         )}
+                        {clause.classification === 'Ambiguous' && (
+                          <div className="flex items-center space-x-2">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleReviewClick(clause);
+                              }}
+                              className="flex items-center space-x-1 px-2 py-1 text-xs font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 transition-colors"
+                            >
+                              <Edit3 className="h-3 w-3" />
+                              <span>Review</span>
+                            </button>
+                            {submittedFeedback.has(clause.id) && (
+                              <div title="Feedback submitted">
+                                <CheckCircle className="h-4 w-4 text-green-500" />
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
-                      {clause.confidence_score && (
-                        <span className="text-sm text-gray-500">
-                          {clause.confidence_score}% confidence
-                        </span>
-                      )}
+                      <div className="flex items-center space-x-2">
+                        {clause.confidence_score && (
+                          <span className="text-sm text-gray-500">
+                            {clause.confidence_score}% confidence
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                   
@@ -317,6 +398,19 @@ export default function ContractResults({ contractId, onGetResults }: ContractRe
           </div>
         )}
       </div>
+
+      {selectedClauseForReview && (
+        <ReviewModal
+          isOpen={reviewModalOpen}
+          onClose={() => {
+            setReviewModalOpen(false);
+            setSelectedClauseForReview(null);
+          }}
+          clause={selectedClauseForReview}
+          onSubmitFeedback={handleSubmitFeedback}
+          existingFeedback={submittedFeedback.get(selectedClauseForReview.id)}
+        />
+      )}
     </div>
   );
 }

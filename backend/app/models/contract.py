@@ -88,6 +88,23 @@ class ContractClause(BaseModel):
     contract = relationship("Contract", back_populates="clauses")
 
 
+class ClauseFeedback(BaseModel):
+    __tablename__ = "clause_feedback"
+    
+    clause_id = Column(String, ForeignKey("contract_clauses.id"), nullable=False)
+    
+    original_classification = Column(String(20), nullable=False)
+    user_classification = Column(String(20), nullable=False)
+    
+    confidence_rating = Column(Integer, nullable=False)
+    
+    user_comments = Column(Text, nullable=True)
+    
+    review_timestamp = Column(DateTime, nullable=False)
+    
+    clause = relationship("ContractClause")
+
+
 class ProcessingLog(BaseModel):
     __tablename__ = "processing_logs"
     

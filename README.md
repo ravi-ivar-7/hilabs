@@ -52,10 +52,13 @@ docker-compose up --build
 cp .env.example .env
 
 # Start all services locally
-./start-services.sh
+./services.sh start
 ```
 
 **Access the application:**
 - **Frontend**: http://localhost:3000
 - **Backend API**: http://localhost:8000
 - **Redis**: localhost:6379
+
+
+later: humanin the loop, add parameter adjustments for classiftion.

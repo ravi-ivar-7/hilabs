@@ -82,6 +82,27 @@ class ContractResultsResponse(BaseModel):
         from_attributes = True
 
 
+class ClauseFeedbackRequest(BaseModel):
+    clause_id: str
+    original_classification: str
+    user_classification: str = Field(..., pattern="^(Standard|Non-Standard|Ambiguous)$")
+    confidence_rating: int = Field(..., ge=1, le=5)
+    user_comments: Optional[str] = None
+
+
+class ClauseFeedbackResponse(BaseModel):
+    id: str
+    clause_id: str
+    original_classification: str
+    user_classification: str
+    confidence_rating: int
+    user_comments: Optional[str] = None
+    review_timestamp: datetime
+
+    class Config:
+        from_attributes = True
+
+
 class HealthResponse(BaseModel):
     status: str
     timestamp: datetime

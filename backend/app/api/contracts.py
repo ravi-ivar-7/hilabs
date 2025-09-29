@@ -5,8 +5,8 @@ import uuid
 from datetime import datetime
 
 from ..core.database import get_db
-from ..models import Contract, ContractClause
-from ..schemas.contract import ContractUploadResponse, ContractResponse, ContractStatusResponse, ContractResultsResponse, ClauseResponse
+from ..models import Contract, ContractClause, ClauseFeedback
+from ..schemas.contract import ContractUploadResponse, ContractResponse, ContractStatusResponse, ContractResultsResponse, ClauseResponse, ClauseFeedbackRequest, ClauseFeedbackResponse
 from ..utils.response_utils import create_success_response, create_error_response
 from ..utils.file_utils import validate_file, sanitize_filename, generate_file_hash, validate_state
 from ..services.contract_service import ContractService
@@ -198,5 +198,83 @@ async def refresh_contract_status(
     except Exception as e:
         return create_error_response(
             message="Failed to refresh contract status",
+            error=str(e)
+        )
+
+
+@router.post("/clauses/feedback", response_model=dict)
+async def submit_clause_feedback(
+    feedback_request: ClauseFeedbackRequest,
+    db: Session = Depends(get_db)
+):
+    """Submit user feedback for ambiguous clause classifications."""
+    try:
+        # Verify the clause exists
+        clause = db.query(ContractClause).filter(ContractClause.id == feedback_request.clause_id).first()
+        if not clause:
+            raise HTTPException(status_code=404, detail="Clause not found")
+        
+        feedback = ClauseFeedback(
+            id=str(uuid.uuid4()),
+            clause_id=feedback_request.clause_id,
+            original_classification=feedback_request.original_classification,
+            user_classification=feedback_request.user_classification,
+            confidence_rating=feedback_request.confidence_rating,
+            user_comments=feedback_request.user_comments,
+            review_timestamp=datetime.utcnow()
+        )
+        
+        db.add(feedback)
+        db.commit()
+        db.refresh(feedback)
+        
+        return create_success_response(
+            data=ClauseFeedbackResponse.from_orm(feedback).dict(),
+            message="Feedback submitted successfully"
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        return create_error_response(
+            message="Failed to submit feedback",
+            error=str(e)
+        )
+
+
+@router.get("/{contract_id}/feedback", response_model=dict)
+async def get_contract_feedback(
+    contract_id: str,
+    db: Session = Depends(get_db)
+):
+    """Get all existing feedback for clauses in a contract."""
+    try:
+        # Verify the contract exists
+        contract = db.query(Contract).filter(Contract.id == contract_id).first()
+        if not contract:
+            raise HTTPException(status_code=404, detail="Contract not found")
+        
+        clauses = db.query(ContractClause).filter(ContractClause.contract_id == contract_id).all()
+        clause_ids = [clause.id for clause in clauses]
+        
+        feedback_records = db.query(ClauseFeedback).filter(
+            ClauseFeedback.clause_id.in_(clause_ids)
+        ).all()
+        
+        feedback_data = {}
+        for feedback in feedback_records:
+            feedback_data[feedback.clause_id] = ClauseFeedbackResponse.from_orm(feedback).dict()
+        
+        return create_success_response(
+            data=feedback_data,
+            message="Feedback retrieved successfully"
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        return create_error_response(
+            message="Failed to retrieve feedback",
             error=str(e)
         )
