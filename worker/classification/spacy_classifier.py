@@ -8,11 +8,13 @@ import re
 from typing import Dict, List, Any, Tuple, Optional
 from dataclasses import dataclass
 import spacy
-from rapidfuzz import fuzz
 from sentence_transformers import SentenceTransformer
-from word2number import w2n
+from rapidfuzz import fuzz
 
-from templates.template_loader import TemplateClause, TemplateLoader
+from templates.template_loader import TemplateLoader, TemplateClause
+from classification_parameters import (
+    FUZZY_THRESHOLD, SBERT_THRESHOLD, SBERT_AMBIG_LOW, SBERT_AMBIG_HIGH, ATTRIBUTE_PATTERNS
+)
 
 logger = logging.getLogger(__name__)
 
@@ -49,11 +51,12 @@ class SpacyClassifier:
         self.templates = templates
         self.target_attributes = target_attributes
         
-        # Classification thresholds, change these based on requirements
-        self.fuzzy_threshold = 70  # Lowered for template matching
-        self.sbert_threshold = 0.60  # Lowered for template matching
-        self.sbert_ambig_low = 0.50
-        self.sbert_ambig_high = 0.70
+
+        
+        self.fuzzy_threshold = FUZZY_THRESHOLD
+        self.sbert_threshold = SBERT_THRESHOLD
+        self.sbert_ambig_low = SBERT_AMBIG_LOW
+        self.sbert_ambig_high = SBERT_AMBIG_HIGH
         
         # Initialize spaCy model
         try:
@@ -74,29 +77,7 @@ class SpacyClassifier:
         
         self.exception_tokens = TemplateLoader.get_exception_tokens()
         self.placeholder_map = TemplateLoader.get_placeholder_map()
-        
-        self.attribute_patterns = {
-            "Medicaid Timely Filing": [
-                r"submit.*claims.*\d+.*days?", r"timely.*filing", r"filing.*deadline",
-                r"claims.*rendered.*refuse payment", r"secondary payor.*\d+.*days?"
-            ],
-            "Medicare Timely Filing": [
-                r"submit.*claims.*\d+.*days?", r"timely.*filing", r"filing.*deadline", 
-                r"claims.*rendered.*refuse payment", r"secondary payor.*\d+.*days?"
-            ],
-            "No Steerage/SOC": [
-                r"eligible.*participate.*networks", r"provider networks attachment",
-                r"steerage", r"standard.*care", r"soc", r"steering"
-            ],
-            "Medicaid Fee Schedule": [
-                r"eligible charges.*covered services", r"compensation schedule",
-                r"\d+.*percent.*eligible charges", r"cost shares", r"payment.*full"
-            ],
-            "Medicare Fee Schedule": [
-                r"medicare advantage network", r"ma covered services", r"ma members",
-                r"related entity", r"common ownership.*control", r"management functions"
-            ]
-        }
+        self.attribute_patterns = ATTRIBUTE_PATTERNS
     
     def classify_clauses(self, clauses: List[Dict[str, Any]]) -> List[ClassificationDecision]:
         """Classify all clauses in the contract.

@@ -294,12 +294,14 @@ export default function ContractResults({ contractId, onGetResults }: ContractRe
                       <span className="font-medium text-yellow-700">{counts.ambiguous}</span>
                     </div>
                     {counts.total > 0 && (
-                      <div className="pt-1 mt-1 border-t border-gray-200">
-                        <div className="flex justify-between text-xs">
-                          <span className="text-gray-500">Standard %:</span>
-                          <span className="font-medium text-gray-700">
-                            {Math.round((counts.standard / counts.total) * 100)}%
-                          </span>
+                      <div className="pt-2 mt-2 border-t border-gray-200">
+                        <div className="bg-green-100 px-2 py-1 rounded-md">
+                          <div className="flex justify-between text-xs">
+                            <span className="text-green-700 font-medium">Standard %:</span>
+                            <span className="font-bold text-green-800">
+                              {Math.round((counts.standard / counts.total) * 100)}%
+                            </span>
+                          </div>
                         </div>
                       </div>
                     )}

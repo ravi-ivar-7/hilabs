@@ -60,5 +60,3 @@ cp .env.example .env
 - **Backend API**: http://localhost:8000
 - **Redis**: localhost:6379
 
-
-later: humanin the loop, add parameter adjustments for classiftion.

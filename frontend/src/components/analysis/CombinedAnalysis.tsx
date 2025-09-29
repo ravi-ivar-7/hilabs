@@ -289,10 +289,12 @@ export default function CombinedAnalysis({ contracts }: CombinedAnalysisProps) {
                       <span className="font-medium text-yellow-700">{data.ambiguous}</span>
                     </div>
                     {total > 0 && (
-                      <div className="pt-1 mt-1 border-t border-gray-200">
-                        <div className="flex justify-between text-xs">
-                          <span className="text-gray-500">Standard %:</span>
-                          <span className="font-medium text-gray-700">{standardPct}%</span>
+                      <div className="pt-2 mt-2 border-t border-gray-200">
+                        <div className="bg-green-100 px-2 py-1 rounded-md">
+                          <div className="flex justify-between text-xs">
+                            <span className="text-green-700 font-medium">Standard %:</span>
+                            <span className="font-bold text-green-800">{standardPct}%</span>
+                          </div>
                         </div>
                       </div>
                     )}
