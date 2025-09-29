@@ -61,10 +61,12 @@ services:
       - DATABASE_URL=sqlite:////app/data/contracts.db
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
-      # Optimize worker performance
-      - CELERY_WORKER_CONCURRENCY=2
+      # Optimize worker performance - single worker for better resource usage
+      - CELERY_WORKER_CONCURRENCY=1
       - CELERY_WORKER_PREFETCH_MULTIPLIER=1
-      - CELERY_WORKER_MAX_TASKS_PER_CHILD=50
+      - CELERY_WORKER_MAX_TASKS_PER_CHILD=10
+      - CELERY_TASK_ALWAYS_EAGER=false
+      - CELERY_TASK_EAGER_PROPAGATES=true
     volumes:
       - backend_data:/app/data
       - worker_uploads:/app/upload

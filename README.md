@@ -22,6 +22,12 @@
 3. [System Architecture](#system-architecture)
 4. [Processing Pipeline](#processing-pipeline)
 
+![System Screenshot](data/Screenshot%20from%202025-09-29%2023-44-29.png)
+
+## Demo Video
+[![Demo Video](data/Screenshot%20from%202025-09-29%2023-44-29.png)](data/Hilabs%20demo.mp4)
+
+*Click the image above to view the demo video*
 
 ## Quick Setup
 

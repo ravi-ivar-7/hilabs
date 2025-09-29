@@ -31,10 +31,16 @@ celery_app.config_from_object({
     'result_serializer': 'json',
     'timezone': 'UTC',
     'enable_utc': True,
-    # Optimize worker settings for better performance
-    'worker_prefetch_multiplier': 1,  # Prevent worker from prefetching too many tasks
+    # Aggressive performance optimizations
+    'worker_prefetch_multiplier': 1,  # Process one task at a time
     'task_acks_late': True,  # Acknowledge tasks only after completion
-    'worker_max_tasks_per_child': 50,  # Restart worker after 50 tasks to prevent memory leaks
+    'worker_max_tasks_per_child': 10,  # Restart worker more frequently to prevent memory bloat
+    'task_compression': 'gzip',  # Compress task data
+    'result_compression': 'gzip',  # Compress results
+    'task_ignore_result': False,  # Keep results for status tracking
+    'result_expires': 3600,  # Results expire in 1 hour
+    'worker_disable_rate_limits': True,  # Disable rate limiting for speed
+    'task_reject_on_worker_lost': True,  # Reject tasks if worker dies
 })
 
 @worker_process_init.connect

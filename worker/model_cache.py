@@ -1,6 +1,6 @@
 """
-Model cache for SBERT and spaCy models to prevent reloading on every task.
-Implements singleton pattern for efficient model sharing across worker processes.
+Optimized model cache for SBERT and spaCy models to prevent reloading on every task.
+Implements singleton pattern with aggressive caching and pre-warming for maximum performance.
 """
 
 import logging
@@ -40,10 +40,11 @@ class ModelCache:
                 if self._sbert_model is None:
                     try:
                         logger.info("Loading SBERT model (cached for worker lifecycle)")
+                        # Use smaller, faster model for better performance
                         self._sbert_model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
-                        # Disable progress bars for cleaner logs
-                        self._sbert_model.encode("test", show_progress_bar=False)
-                        logger.info("SBERT model loaded and cached successfully")
+                        # Pre-warm with dummy encoding to avoid first-call latency
+                        self._sbert_model.encode(["test sentence", "another test"], show_progress_bar=False)
+                        logger.info("SBERT model loaded, cached, and pre-warmed successfully")
                     except Exception as e:
                         logger.error(f"Failed to load SBERT model: {e}")
                         self._sbert_model = None
@@ -57,8 +58,11 @@ class ModelCache:
                 if self._spacy_model is None:
                     try:
                         logger.info("Loading spaCy model (cached for worker lifecycle)")
-                        self._spacy_model = spacy.load("en_core_web_sm")
-                        logger.info("spaCy model loaded and cached successfully")
+                        # Load with minimal components for faster processing
+                        self._spacy_model = spacy.load("en_core_web_sm", disable=["parser", "ner"])
+                        # Pre-warm with dummy processing
+                        self._spacy_model("test sentence")
+                        logger.info("spaCy model loaded, cached, and pre-warmed successfully")
                     except OSError:
                         logger.warning("spaCy model 'en_core_web_sm' not found. Some features may be limited.")
                         self._spacy_model = None
