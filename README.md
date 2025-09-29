@@ -22,10 +22,12 @@
 3. [System Architecture](#system-architecture)
 4. [Processing Pipeline](#processing-pipeline)
 
-![System Screenshot](data/Screenshot%20from%202025-09-29%2023-44-29.png)
+## System Interface
+
+![Healthcare Contract Classification Analysis](data/Screenshot%20from%202025-09-29%2023-44-29.png)
 
 ## Demo Video
-[Watch Demo on Canva](https://www.canva.com/design/DAG0YhtWHVQ/VKSFMlQfL7KJIZRqF0XSWQ/watch)
+<a href="https://www.canva.com/design/DAG0YhtWHVQ/VKSFMlQfL7KJIZRqF0XSWQ/watch" target="_blank">Watch Demo on Canva</a>
 
 ## Quick Setup
 
