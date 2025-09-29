@@ -6,6 +6,7 @@ import { ContractFile } from '../../types/contract';
 import { formatFileSize } from '../../lib/utils';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import ContractResults from '../../components/contract/ContractResults';
+import CombinedAnalysis from '../../components/analysis/CombinedAnalysis';
 import { useContractUpload } from '../../hooks/useContractUpload';
 import { apiClient } from '../../lib/api';
 
@@ -355,6 +356,9 @@ export default function AnalysisPage() {
           </div>
         </div>
       </div>
+
+      {/* Combined Analysis Section */}
+      <CombinedAnalysis contracts={contracts} />
 
       {/* Contracts List */}
       <div className="bg-white rounded-lg shadow-sm">

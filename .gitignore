@@ -4,6 +4,13 @@ docs
 worker/phases
 hackathon
 notebooks
+frontend/src/components/analysis
+
+# Virtual environments
+venv/
+worker/venv/
+*/venv/
+.venv/
 
 
 # Upload directories - contract files (ignore files but keep folders)
