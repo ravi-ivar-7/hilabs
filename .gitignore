@@ -3,7 +3,7 @@ docs
 .env
 worker/phases
 hackathon
-notebooks
+notebooks/outputs
 
 # Virtual environments
 venv/
