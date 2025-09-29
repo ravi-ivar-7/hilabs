@@ -6,6 +6,10 @@ import sys
 import os
 from pathlib import Path
 from celery import Celery
+from celery.signals import worker_process_init
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Set up paths for Docker container or local development
 if os.path.exists('/app'):
@@ -27,6 +31,28 @@ celery_app.config_from_object({
     'result_serializer': 'json',
     'timezone': 'UTC',
     'enable_utc': True,
+    # Optimize worker settings for better performance
+    'worker_prefetch_multiplier': 1,  # Prevent worker from prefetching too many tasks
+    'task_acks_late': True,  # Acknowledge tasks only after completion
+    'worker_max_tasks_per_child': 50,  # Restart worker after 50 tasks to prevent memory leaks
 })
+
+@worker_process_init.connect
+def init_worker_process(sender=None, **kwargs):
+    """Initialize database and models once per worker process."""
+    try:
+        # Initialize database tables once per worker
+        from app.core.database import init_db
+        init_db()
+        logger.info("Database tables initialized for worker process")
+        
+        # Pre-warm model cache to avoid loading delays on first task
+        from model_cache import model_cache
+        model_cache.get_spacy_model()
+        model_cache.get_sbert_model()
+        logger.info("Models pre-loaded and cached for worker process")
+        
+    except Exception as e:
+        logger.error(f"Failed to initialize worker process: {e}")
 
 celery_app.autodiscover_tasks(['tasks'])

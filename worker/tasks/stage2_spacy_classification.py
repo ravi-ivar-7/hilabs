@@ -55,9 +55,6 @@ def classify_contract(self, contract_id: str):
         contract_id: UUID of the contract to classify
     """
     try:
-        # Ensure database tables exist
-        init_db()
-        
         db = next(get_db())
         
         contract = db.query(Contract).filter(Contract.id == contract_id).first()

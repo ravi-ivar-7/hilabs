@@ -33,8 +33,6 @@ logger = logging.getLogger(__name__)
 def preprocess_contract(self, contract_id: str):
     """Extract text from contract PDF - Phase 2 preprocessing"""
     try:
-        init_db()
-        
         db = next(get_db())
         
         contract = db.query(Contract).filter(Contract.id == contract_id).first()

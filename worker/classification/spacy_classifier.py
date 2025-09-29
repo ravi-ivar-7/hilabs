@@ -15,6 +15,7 @@ from templates.template_loader import TemplateLoader, TemplateClause
 from classification_parameters import (
     FUZZY_THRESHOLD, SBERT_THRESHOLD, SBERT_AMBIG_LOW, SBERT_AMBIG_HIGH, ATTRIBUTE_PATTERNS
 )
+from model_cache import model_cache
 
 logger = logging.getLogger(__name__)
 
@@ -51,29 +52,14 @@ class SpacyClassifier:
         self.templates = templates
         self.target_attributes = target_attributes
         
-
-        
         self.fuzzy_threshold = FUZZY_THRESHOLD
         self.sbert_threshold = SBERT_THRESHOLD
         self.sbert_ambig_low = SBERT_AMBIG_LOW
         self.sbert_ambig_high = SBERT_AMBIG_HIGH
         
-        # Initialize spaCy model
-        try:
-            self.nlp = spacy.load("en_core_web_sm")
-        except OSError:
-            logger.warning("spaCy model 'en_core_web_sm' not found. Some features may be limited.")
-            self.nlp = None
-        
-        # Initialize SBERT model
-        try:
-            self.sbert_model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
-            # Disable progress bars for cleaner logs
-            self.sbert_model.encode("test", show_progress_bar=False)
-            logger.info("SBERT model loaded successfully")
-        except Exception as e:
-            logger.warning(f"Failed to load SBERT model: {e}")
-            self.sbert_model = None
+        # Use cached models 
+        self.nlp = model_cache.get_spacy_model()
+        self.sbert_model = model_cache.get_sbert_model()
         
         self.exception_tokens = TemplateLoader.get_exception_tokens()
         self.placeholder_map = TemplateLoader.get_placeholder_map()
